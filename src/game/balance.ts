@@ -4,7 +4,7 @@ export const BALANCE = {
   baseWeights: { gold: 56, multiplier: 18, treasure: 11, relic: 7, curse: 6, ruin: 2, jackpot: 0.5 },
   goldValues: [50, 100, 150, 250, 500],
   upgrades: [
-    { id: 'fortune', name: '악마의 눈금', desc: '금괴·보물 등장 확률 +2%p', max: 5, cost: [20, 35, 55, 80, 110] },
+    { id: 'fortune', name: '악마의 눈금', desc: '금화·보물 등장 가중치를 높입니다', max: 5, cost: [20, 35, 55, 80, 110] },
     { id: 'greed', name: '탐욕의 서약', desc: '연승 배율 +4%', max: 5, cost: [25, 45, 70, 100, 140] },
     { id: 'insight', name: '핏빛 통찰', desc: '상자 단서를 더 선명하게 읽습니다', max: 3, cost: [30, 60, 100] },
     { id: 'insurance', name: '영혼 보험', desc: 'RUN당 RUIN을 한 번 막아냅니다', max: 1, cost: [120] },
@@ -70,7 +70,7 @@ export function createChests(save:SaveData,run:RunState):Chest[] {
     else result={type,name:'RUIN'};
     const clues:Record<ResultType,string[]>={gold:['금빛 먼지','잔잔한 금속음','따뜻한 빛'],multiplier:['문양이 회전한다','쇠사슬이 풀렸다','붉은 각인'],treasure:['상자 안쪽의 광채','묵직한 진동','황금 향'],relic:['오래된 속삭임','푸른 불꽃','낯선 문장'],curse:['식은 촛불','검은 안개','갈라진 봉인'],ruin:['붉게 맥동하는 봉인','상자 밑의 검은 연기','날카로운 진동'],jackpot:['금고 안에서 울리는 종','붉은 문양이 황금빛으로','멈추지 않는 금속음']};
     let clue=clues[type][Math.floor(Math.random()*clues[type].length)]!;
-    if(save.upgrades.insight) clue=`${clue}${save.upgrades.insight>=2?` · ${type==='ruin'?'위험':'안정'}한 기운`:''}`;
+    if(save.upgrades.insight) clue=`${clue} · ${save.upgrades.insight>=2?(type==='ruin'?'위험':'안정')+'한 기운':'기운 선명'}`;
     if(run.character==='seer'&&type!=='ruin'&&i===Math.floor(Math.random()*3)) clue+=` · 예언자의 빛`;
     return { clue, result };
   });
