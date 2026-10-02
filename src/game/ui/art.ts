@@ -1,3 +1,4 @@
+import type { ChestTier } from '../types/chest';
 /** Local, scalable artwork. No remote assets or font requests. */
 let serial = 0;
 const svg = (body: string, viewBox = '0 0 24 24', cls = 'ui-icon') => `<svg class="${cls}" viewBox="${viewBox}" fill="none" aria-hidden="true" focusable="false">${body}</svg>`;
@@ -54,12 +55,16 @@ export function vaultArt(): string {
   <g fill="#88784e"><circle cx="54" cy="449" r="4"/><circle cx="467" cy="449" r="4"/></g>
   `,'0 0 520 500','vault-art');
 }
-export function chestArt(type = 'sealed', opened = false): string {
+export function chestArt(type = 'sealed', opened = false, tier:ChestTier='common'): string {
   const id = `chest-${++serial}`;
   const ruin = type === 'ruin' || type === 'curse';
-  const accent = ruin ? '#bc5144' : type === 'relic' ? '#8bb6a1' : '#d1ac69';
-  return svg(`<defs><linearGradient id="${id}-wood" x2=".3" y2="1"><stop stop-color="#4c4031"/><stop offset="1" stop-color="#201e18"/></linearGradient><linearGradient id="${id}-metal" x2=".6" y2="1"><stop stop-color="#c4ad76"/><stop offset=".3" stop-color="#7a6b45"/><stop offset=".6" stop-color="#3c392a"/><stop offset="1" stop-color="#a99360"/></linearGradient><radialGradient id="${id}-glow"><stop stop-color="${accent}" stop-opacity=".65"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient></defs>
+  const palettes:Record<ChestTier,[string,string,string]>={common:['#44453d','#282c27','#93947f'],uncommon:['#46515a','#202b32','#c2d7da'],rare:['#57492b','#302816','#e5bd67'],epic:['#5d2931','#25131c','#df6b73'],legendary:['#222922','#0c1410','#f0c97c'],mythic:['#503b63','#1e1728','#edd6ff']};
+  const [wood,dark,metal]=palettes[tier];
+  const high=tier==='legendary'||tier==='mythic';
+  const accent = ruin ? '#bc5144' : type === 'relic' ? '#8bb6a1' : metal;
+  return svg(`<defs><linearGradient id="${id}-wood" x2=".3" y2="1"><stop stop-color="${wood}"/><stop offset="1" stop-color="${dark}"/></linearGradient><linearGradient id="${id}-metal" x2=".6" y2="1"><stop stop-color="${metal}"/><stop offset=".3" stop-color="#7a6b45"/><stop offset=".6" stop-color="#3c392a"/><stop offset="1" stop-color="#a99360"/></linearGradient><radialGradient id="${id}-glow"><stop stop-color="${accent}" stop-opacity=".65"/><stop offset="1" stop-color="${accent}" stop-opacity="0"/></radialGradient></defs>
     <ellipse cx="140" cy="196" rx="107" ry="13" fill="#030706" opacity=".7"/>
+    ${tier!=='common'?`<ellipse cx="140" cy="123" rx="125" ry="100" fill="url(#${id}-glow)" opacity="${high?.7:.35}"/>`:''}
     ${opened ? `<ellipse cx="140" cy="123" rx="105" ry="87" fill="url(#${id}-glow)"/>` : ''}
     <path d="m40 97 199 0 0 83-14 13H54l-14-13Z" fill="url(#${id}-wood)" stroke="#151911" stroke-width="3"/>
     <g stroke="#786c4d" stroke-opacity=".35"><path d="M45 125h190M45 156h190M45 178h190M94 107v76M184 107v76"/></g>
@@ -69,6 +74,9 @@ export function chestArt(type = 'sealed', opened = false): string {
     <path d="M40 178h199v11H40Z" fill="url(#${id}-metal)"/>
     <g fill="#d2b67c" stroke="#302c1e"><circle cx="79" cy="116" r="3"/><circle cx="79" cy="166" r="3"/><circle cx="200" cy="116" r="3"/><circle cx="200" cy="166" r="3"/></g>
     <path d="m120 102 40 0-4 43-16 14-16-14Z" fill="#292d22" stroke="${accent}" stroke-width="2"/><circle cx="140" cy="120" r="6" fill="${accent}"/><path d="M140 124v12" stroke="${accent}" stroke-width="4"/>
+    ${high&&!opened?`<g stroke="${metal}" fill="none" stroke-width="2"><path d="M52 58 229 159M228 58 52 159"/>${Array.from({length:7},(_,i)=>`<ellipse cx="${65+i*24}" cy="${66+i*13}" rx="12" ry="5" transform="rotate(32 ${65+i*24} ${66+i*13})"/>`).join('')}<circle cx="140" cy="70" r="25"/><path d="m123 69 8 5 9-16 9 16 8-5-5 20h-24Z"/></g>`:''}
+    ${tier==='mythic'?`<g fill="${metal}" stroke="${dark}" stroke-width="2"><path d="m46 37 8-18 9 18 14-13-5 30H47ZM205 37l8-18 9 18 14-13-5 30h-25Z"/></g><g class="tier-sparks" fill="${metal}"><circle cx="24" cy="83" r="2"/><circle cx="257" cy="127" r="3"/><circle cx="245" cy="35" r="2"/><circle cx="38" cy="157" r="2"/></g>`:''}
+    ${tier==='epic'?`<path d="M109 45c-9 24 13 35 2 50m56-53c15 25-10 32 6 55" stroke="${metal}" stroke-width="3" fill="none"/>`:''}
     ${opened && !ruin ? `<g fill="${accent}" stroke="#5d4b29"><ellipse cx="114" cy="105" rx="12" ry="5"/><ellipse cx="165" cy="99" rx="12" ry="5"/><ellipse cx="140" cy="108" rx="15" ry="5"/></g><g class="reward-sparks" fill="${accent}"><path d="m104 61 3 6 6 3-6 3-3 6-3-6-6-3 6-3ZM175 44l2 5 5 2-5 2-2 5-2-5-5-2 5-2Z"/></g>` : ''}
   `,'0 0 280 215','chest-art');
 }
