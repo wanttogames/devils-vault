@@ -44,6 +44,11 @@ npm run preview
 src/main.ts             Phaser 분위기 씬과 게임 흐름/UI
 src/game/balance.ts     확률, 밸런스, 캐릭터, 유물, 데이터 타입
 src/game/save.ts        버전형 localStorage 저장 관리
+src/game/ui/art.ts      금고·상자·문양·아이콘 SVG 그래픽
 src/style.css           다크 판타지 반응형 UI
 .github/workflows/      GitHub Pages 배포
 ```
+
+## 디자인 패치 (1.1)
+
+금속 금고문과 붉은 봉인, 황동 상자, 캐릭터 계약서, 보상 HUD와 결과 화면을 새 디자인으로 통일했습니다. 모든 그래픽은 로컬 SVG로 그려져 해상도에 따라 선명하게 확대되며 외부 이미지·폰트 요청이 없습니다. 골드 숫자는 증가 애니메이션으로 표시하며 모바일 버튼은 최소 44px 터치 영역을 확보했습니다. 움직임 줄이기 설정과 키보드 포커스 표시를 지원합니다.
