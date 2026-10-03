@@ -11,3 +11,7 @@
 @media (prefers-reduced-motion:reduce){.vault-stick span,.vault-interact,.playable-world-active .action-panel .post-choice,.playable-world-active .action-panel>.escape-btn{transition:none}}
 .vault-world-layer canvas{image-rendering:pixelated;image-rendering:crisp-edges}
 .vault-interact.is-ready{border-color:#ffdc8b;box-shadow:0 0 16px #d99a4566,0 8px 22px #0007;filter:brightness(1.2)}
+.vault-text-layer{position:absolute;inset:0;z-index:3;pointer-events:none;overflow:hidden}
+.vault-world-text{position:absolute;display:block;max-width:calc(100% - 24px);font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;line-height:1.35;text-align:center;white-space:pre-line;overflow-wrap:anywhere;text-shadow:0 1px 1px #000;image-rendering:auto;pointer-events:none}
+.vault-world-text[hidden]{display:none}
+.vault-world-text-panel{padding:6px 10px;border:1px solid #d3ad6340;border-radius:5px;text-shadow:none;white-space:nowrap}
