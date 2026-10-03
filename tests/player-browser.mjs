@@ -10,7 +10,7 @@ try {
  for(const mobile of [false,true]) {
   const context=await browser.newContext({viewport:mobile?{width:360,height:800}:{width:1280,height:900},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack)});page.on('console',m=>{if(m.type()==='error')console.error(m.text())});
-  await page.addInitScript(()=>localStorage.setItem('devils-vault-save-v1',JSON.stringify({introSeen:true,tutorialCompleted:true,settings:{sound:false}})));
+  await page.addInitScript(()=>{const realRandom=Math.random;Math.random=()=>new Error().stack.includes('UUID')?realRandom():.00001;localStorage.setItem('devils-vault-save-v1',JSON.stringify({introSeen:true,tutorialCompleted:true,settings:{sound:false}}))});
   await page.goto('http://127.0.0.1:5175/devils-vault/');await page.locator('[data-action="start"]').click();await page.locator('[data-character="gambler"]').click();await page.locator('.vault-world-layer canvas').waitFor();
   await page.evaluate(async()=>{const module=await import('/devils-vault/src/playable.ts');window.playerModule=module;});
   await page.waitForFunction(()=>window.playerModule.activeVaultScene?.visual?.sprite.anims.currentAnim);
@@ -38,5 +38,5 @@ try {
   await page.evaluate(()=>{const s=window.playerModule.activeVaultScene;const t=s.targets.find(t=>t.kind==='escape');s.player.setPosition(t.x,t.y-40);s.scan()});
   await page.keyboard.press('Space',{delay:40});await page.waitForTimeout(350);if(await page.locator('[data-modal="escape"]').count())await page.locator('[data-modal="escape"]').click();await page.locator('.depth-summary').waitFor();assert.deepEqual(errors,[]);await context.close();
  }
- console.log('PASS: four directions, walk/idle, last facing, diagonal, E and touch joystick/button, 24 animation frames, pixel chest spacing, opening frame, portrait/landscape rebuild, Escape door, no browser errors.');
+ console.log('PASS: four directions, walk/idle, last facing, diagonal, E and touch joystick/button, 24 animation frames, pixel chest spacing, opening frame, portrait/landscape rebuild, Escape door, native text at DPR 1/3, no browser errors.');
 } finally {await browser?.close();server.kill()}
