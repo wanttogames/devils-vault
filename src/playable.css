@@ -9,3 +9,5 @@
 @media (pointer:coarse),(max-width:760px){.vault-door.playable-active{min-height:540px;border-radius:12px}.vault-world-help{top:50px;font-size:10px;padding:6px 9px}.desktop-help{display:none}.mobile-help{display:inline}.vault-mobile-controls{display:block}.vault-door.playable-active>.chests{min-height:350px}.playable-world-active .action-panel .post-choice,.playable-world-active .action-panel>.escape-btn{opacity:.25}}
 @media (max-width:430px){.vault-door.playable-active{min-height:500px}.vault-stick{left:14px;bottom:16px;width:98px;height:98px}.vault-stick span{left:calc(50% - 21px);top:calc(50% - 21px);width:42px;height:42px}.vault-interact{right:14px;bottom:23px;width:96px;min-height:66px}}
 @media (prefers-reduced-motion:reduce){.vault-stick span,.vault-interact,.playable-world-active .action-panel .post-choice,.playable-world-active .action-panel>.escape-btn{transition:none}}
+.vault-world-layer canvas{image-rendering:pixelated;image-rendering:crisp-edges}
+.vault-interact.is-ready{border-color:#ffdc8b;box-shadow:0 0 16px #d99a4566,0 8px 22px #0007;filter:brightness(1.2)}

@@ -9,13 +9,14 @@ process.on('exit',()=>server.kill());
 const browser=await chromium.launch({executablePath:process.env.VAULT_BROWSER_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage','--disable-gpu','--no-zygote'],headless:true});
 const context=await browser.newContext({viewport:{width:1280,height:900}});
 const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
-await page.addInitScript(()=>{Math.random=()=>0.00001;localStorage.setItem('devils-vault-save-v1',JSON.stringify({version:1,introSeen:true,tutorialCompleted:true,settings:{sound:false,reducedMotion:true}}));});
+await page.addInitScript(()=>{const realRandom=Math.random;Math.random=()=>new Error().stack.includes('UUID')?realRandom():0.00001;localStorage.setItem('devils-vault-save-v1',JSON.stringify({version:1,introSeen:true,tutorialCompleted:true,settings:{sound:false,reducedMotion:true}}));});
 await page.goto('http://127.0.0.1:5173/devils-vault/');
 await page.locator('[data-action="start"]').click();await page.locator('[data-character="gambler"]').click();
 assert.equal(await page.locator('[data-chest]').count(),3);
 await page.screenshot({path:'test-results/vault-b1-desktop.png',fullPage:true});
+// Keep Phaser UUID randomness independent from seeded gameplay outcomes.
 // Force only the two synchronous discovery RNG calls. No production debug hooks.
-async function discover(roomRoll){await page.evaluate(roll=>{let i=0;Math.random=()=>[0,roll][i++]??.00001;document.querySelector('[data-action="continue"]').click();},roomRoll);await page.locator('[data-action="special-enter"]').waitFor();}
+async function discover(roomRoll){await page.evaluate(roll=>{let i=0;Math.random=()=>new Error().stack.includes('UUID')?crypto.getRandomValues(new Uint32Array(1))[0]/4294967296:([0,roll][i++]??.00001);document.querySelector('[data-action="continue"]').click();},roomRoll);await page.locator('[data-action="special-enter"]').waitFor();}
 await page.locator('[data-chest="0"]').click();await discover(.35);assert.ok((await page.locator('.vault-decision').textContent()).includes('BLOOD VAULT'));
 await page.locator('[data-action="special-skip"]').click();assert.equal(await page.locator('[data-chest]').count(),3);assert.ok((await page.locator('.floor-hud').textContent()).includes('Round 2 / 3'));
 // Natural progression, skip room offers. Floor boundaries must always be explicit.
@@ -42,7 +43,7 @@ for(const [name,roll] of [['GOLD VAULT',.1],['BLOOD VAULT',.35],['CURSED VAULT',
 }
 // Portrait touch targets, overflow and continued input after transitions.
 const mobile=await browser.newContext({viewport:{width:360,height:800},isMobile:true,hasTouch:true,deviceScaleFactor:1});const m=await mobile.newPage();m.on('pageerror',e=>errors.push(e.message));
-await m.addInitScript(()=>{Math.random=()=>.00001;localStorage.setItem('devils-vault-save-v1',JSON.stringify({introSeen:true,tutorialCompleted:true,settings:{sound:false,reducedMotion:true}}));});await m.goto('http://127.0.0.1:5173/devils-vault/');await m.locator('[data-action="start"]').tap();await m.locator('[data-character="gambler"]').tap();
+await m.addInitScript(()=>{const realRandom=Math.random;Math.random=()=>new Error().stack.includes('UUID')?realRandom():.00001;localStorage.setItem('devils-vault-save-v1',JSON.stringify({introSeen:true,tutorialCompleted:true,settings:{sound:false,reducedMotion:true}}));});await m.goto('http://127.0.0.1:5173/devils-vault/');await m.locator('[data-action="start"]').tap();await m.locator('[data-character="gambler"]').tap();
 assert.ok(await m.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));for(const chest of await m.locator('[data-chest]').all()){const r=await chest.boundingBox();assert.ok(r.width>=44&&r.height>=44);assert.ok(r.x>=0&&r.x+r.width<=360);}
 await m.screenshot({path:'test-results/vault-mobile.png',fullPage:true});await m.locator('[data-chest="2"]').tap();await m.locator('[data-action="continue"]').tap();await m.locator('[data-action="special-enter"]').waitFor();await m.locator('[data-action="special-enter"]').tap();await m.locator('[data-chest="1"]').tap();await m.locator('[data-action="continue"]').tap();await m.locator('[data-chest="0"]').tap();await m.locator('[data-action="continue"]').tap();await m.locator('[data-chest="0"]').tap();await m.locator('[data-action="descend"]').tap();await m.locator('.vault-transition').waitFor({state:'detached'});await m.locator('[data-chest="1"]').tap();assert.equal(await m.locator('[data-action="escape"]').count(),1);await m.locator('[data-action="escape"]').tap();if(await m.locator('[data-modal="escape"]').count())await m.locator('[data-modal="escape"]').tap();assert.ok(await m.evaluate(()=>document.documentElement.scrollWidth<=innerWidth));await m.screenshot({path:'test-results/vault-mobile-result.png',fullPage:true});assert.equal(errors.length,0,errors.join('\n'));
 // Every discovered type persists, including skipped rooms.

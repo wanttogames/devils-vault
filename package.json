@@ -8,7 +8,8 @@
     "build": "tsc -b && vite build",
     "preview": "vite preview",
     "test": "node scripts/test.mjs",
-    "test:browser": "node tests/browser.mjs"
+    "test:browser": "node tests/browser.mjs",
+    "test:player": "node tests/player-browser.mjs"
   },
   "dependencies": {
     "phaser": "^3.90.0"
