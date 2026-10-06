@@ -26,13 +26,13 @@ export const RELICS = [
 ] as const;
 export const CHARACTERS = [
   { id: 'gambler', name: '도박사', title: '운명은 흔드는 자의 편', desc: '기본 RUIN 확률 -2%p', icon: '♠' },
-  { id: 'seer', name: '예언자', title: '금고의 속삭임을 듣는다', desc: '매 라운드 가장 안전한 상자에 희미한 빛', icon: '◉' },
+  { id: 'seer', name: '예언자', title: '금고의 속삭임을 듣는다', desc: '상자 단서를 더 정확하게 읽음', icon: '◉' },
   { id: 'collector', name: '수집가', title: '빈손으로 돌아가지 않는다', desc: '보물 골드 +25%', icon: '♜' },
   { id: 'immortal', name: '불사자', title: '죽음과 한 번 거래했다', desc: '첫 RUIN을 체력 1로 견딤', icon: '†' },
 ] as const;
 export type ResultType = 'gold'|'multiplier'|'treasure'|'relic'|'curse'|'ruin'|'jackpot';
 export type ChestResult = { type: ResultType; rewardScale?: number; curseLoss?:number; amount?: number; name?: string; detail?: string };
-export type Chest = { tier:ChestTier; ruinChance:number; payout?:number; clue: string; result: ChestResult; hint?: string };
+export type Chest = { tier:ChestTier; ruinChance:number; payout?:number; clue: string; clueSignal?:'fortune'|'mystic'|'danger'; result: ChestResult; hint?: string };
 export type Settings = { sound: boolean; shake: boolean; reducedMotion: boolean };
 export type Stats = { runs: number; escapes: number; ruins: number; bestStreak: number; bestRun: number; jackpots: number; lifetimeGold: number; doubleWins: number; deepestFloorReached:number; chestTierStats:ChestTierWeights; specialVaultsDiscovered:number; specialVaultTypes:SpecialVaultId[] };
 export type SaveData = { version: number; soulCoins: number; jackpotGauge: number; upgrades: Record<string,number>; unlockedCharacters: string[]; achievements: string[]; statistics: Stats; settings: Settings; tutorialCompleted: boolean; introSeen: boolean };

@@ -146,7 +146,11 @@ footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding
 .chest-body b { font-size: 13px; font-weight: 500; line-height: 1.4; }
 .chest-body > span { color: #e5c885; font-size: 11px; }
 .chest-clue { display: flex; align-items: flex-start; justify-content: center; gap: 5px; margin: 10px 0 0; font-size: 9px; color: #929d82; line-height: 1.6; min-height: 29px; }
-.chest-clue > i { flex-shrink: 0; width: 3px; height: 3px; margin-top: 6px; border-radius: 50%; background: #8d956a; }
+.chest-clue > i { flex-shrink: 0; width: 5px; height: 5px; margin-top: 5px; border-radius: 50%; background: #9caa7c; }
+.chest.clue-fortune .chest-clue { color: #d3bc79; }.chest.clue-fortune .chest-clue > i { background: #e5c56f; box-shadow: 0 0 6px #e5c56f88; }
+.chest.clue-mystic .chest-clue { color: #b5a3d2; }.chest.clue-mystic .chest-clue > i { background: #b5a3d2; box-shadow: 0 0 6px #b5a3d288; }
+.chest.clue-danger .chest-clue { color: #d39483; }.chest.clue-danger .chest-clue > i { background: #d77961; box-shadow: 0 0 6px #d7796188; }
+.chest.seer-reading { border-color: #9486c4aa; box-shadow: inset 0 0 20px #9486c422; }
 .chest.selected { border-color: #dcc27d; background: linear-gradient(170deg, #4a4a2345, #202719b0); box-shadow: inset 0 0 25px #c7aa6520; }
 .chest.selected .chest-index i { color: #d1bb7f; }
 .chest.revealed:not(.selected) { opacity: .63; }
@@ -154,7 +158,7 @@ footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding
 .chest.revealed.curse, .chest.revealed.ruin { border-color: #a95e454f; background: linear-gradient(170deg, #53272240, #111913aa); }
 .chest.revealed.curse .chest-body, .chest.revealed.ruin .chest-body, .chest.curse .chest-result-icon { color: #d68d7b; }
 .chest.revealed.jackpot.selected { border-color: #f6d88a; animation: jackpotGlow 1.4s infinite alternate; }
-.chest.seer-safe { border-color: #798d6670; box-shadow: inset 0 0 20px #80946915; }
+
 .chest.danger-hint { border-color: #a3524260; }
 .candles { display: flex; align-items: flex-end; gap: 5px; position: absolute; top: 49%; }
 .candle-left { left: 15px; }.candle-right { right: 15px; }
@@ -165,7 +169,7 @@ footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding
 .action-panel { min-height: 104px; padding: 20px 0; border-top: 1px solid #a6a27526; border-bottom: 1px solid #a6a27526; display: flex; align-items: center; justify-content: space-between; gap: 24px; }
 .choice-prompt, .result-callout { display: flex; align-items: center; gap: 12px; }
 .choice-prompt > .ui-icon { width: 32px; height: 32px; color: #8e9c7b; }
-.choice-prompt p { margin: 0 0 7px; font-size: 13px; color: #d0d4bf; }
+.choice-prompt p { margin: 0 0 7px; font-size: 13px; color: #d0d4bf; }.choice-prompt small { max-width: 660px; }
 .action-panel small { color: #809073; font-size: 10px; line-height: 1.6; }
 .result-callout > span { display: grid; place-items: center; width: 42px; height: 42px; border: 1px solid #a9a07744; color: #ccb478; background: #38452730; }
 .result-callout > div { display: grid; gap: 7px; }

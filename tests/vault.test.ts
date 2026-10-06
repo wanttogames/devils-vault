@@ -12,6 +12,7 @@ import { SpecialVaultManager } from '../src/game/systems/SpecialVaultManager';
 import { createRun, floorBonus, trackChest, trackFloor, summary } from '../src/game/systems/RunManager';
 import { ChestTierManager } from '../src/game/systems/ChestTierManager';
 import { createChests, rewardWeights, riskForRound, finalChest, applyReward } from '../src/game/systems/RewardManager';
+import { clueAccuracy, clueForResult, signalForResult } from '../src/game/systems/ChestClueSystem';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -43,6 +44,18 @@ test('Gold is safe, Rare+, one choice; Blood Epic+, increased risk and rewards',
 test('Cursed room has precisely two rewards and one shuffled trap; hints work',()=>{
  const save=fresh(),run=createRun('seer'),random=seeded();run.phase='special';run.activeSpecial='cursed';const badIndices=new Set<number>();for(let i=0;i<300;i++){const chests=createChests(save,run,random);const bad=chests.filter(c=>['curse','ruin'].includes(c.result.type));assert.equal(bad.length,1);badIndices.add(chests.indexOf(bad[0]!));assert.ok(chests.some(c=>c.hint?.includes('예언자')));assert.ok(chests.every(c=>Math.abs(c.ruinChance-100/6)<1e-10));}assert.equal(badIndices.size,3);
  run.relics=['eye','thread'];run.relicUsed=[];const chests=createChests(save,run,()=>0);assert.ok(chests.some(c=>c.hint));assert.ok(run.relicUsed.includes('eye'));
+});
+test('chest omens hint at outcome families, sometimes mislead, and improve with Seer/Insight',()=>{
+ const fortune={type:'gold' as const},mystic={type:'relic' as const},danger={type:'ruin' as const};
+ assert.equal(signalForResult(fortune),'fortune');assert.equal(signalForResult(mystic),'mystic');assert.equal(signalForResult(danger),'danger');
+ assert.ok(clueAccuracy('gambler',0)<clueAccuracy('seer',0));assert.ok(clueAccuracy('gambler',0)<clueAccuracy('gambler',2));assert.equal(clueAccuracy('seer',3),.96);
+ const sample=(accuracy:number)=>{const random=seeded(77);let correct=0;for(let i=0;i<12000;i++){const result=[fortune,mystic,danger][i%3]!;if(clueForResult(result,random,accuracy).signal===signalForResult(result))correct++;}return correct/12000;};
+ const base=sample(clueAccuracy('gambler',0)),seer=sample(clueAccuracy('seer',0));
+ assert.ok(Math.abs(base-.7)<.015,'base clue accuracy '+base);assert.ok(Math.abs(seer-.84)<.015,'Seer clue accuracy '+seer);
+ const save=fresh(),run=createRun('gambler'),clues=createChests(save,run,seeded());
+ assert.equal(clues.length,3);assert.ok(clues.every(c=>c.clue.length>12&&c.clueSignal));
+ const seerRun=createRun('seer'),seerChests=createChests(save,seerRun,seeded());
+ assert.ok(seerChests.every(c=>c.hint?.startsWith('예언자의 감응 · ')));
 });
 test('Relic room offers three distinct visible relics; shop charges run gold once',()=>{
  const save=fresh(),run=createRun('gambler');run.phase='special';run.activeSpecial='relic';const cs=createChests(save,run,seeded());assert.equal(new Set(cs.map(c=>c.result.detail)).size,3);for(const c of cs){assert.equal(c.result.type,'relic');assert.equal(c.hint,c.result.name);assert.equal(c.ruinChance,0);}

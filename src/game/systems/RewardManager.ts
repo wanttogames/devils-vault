@@ -3,6 +3,7 @@ import { FloorManager } from './FloorManager';
 import { ChestTierManager } from './ChestTierManager';
 import { SPECIAL_VAULTS, FINAL_CHEST, SPECIAL_BALANCE } from '../data/specialVaults';
 import type { ChestTier } from '../types/chest';
+import { addChestClues, clueAccuracy } from './ChestClueSystem';
 
 export function riskForRound(_round:number,_save:SaveData,run:RunState,tier:ChestTier='common'):number {
  const floor=FloorManager.definition(run);
@@ -41,8 +42,10 @@ function resultFor(type:ResultType,run:RunState,tier:ChestTier,random:()=>number
  return {...base,name:'RUIN'};
 }
 export function applyHints(chests:Chest[],save:SaveData,run:RunState,random=Math.random){
- if(save.upgrades.insight)for(const c of chests)c.clue+=save.upgrades.insight>=2?(c.result.type==='ruin'?' · 위험한 기운':' · 안정한 기운'):' · 기운 선명';
- if(run.character==='seer'){const safe=chests.find(c=>c.result.type!=='ruin'&&c.result.type!=='curse');if(safe)safe.hint='예언자의 빛 · 안전한 기운';}
+ const insight=save.upgrades.insight??0;
+ const accuracy=clueAccuracy(run.character,insight);
+ addChestClues(chests,random,accuracy);
+ if(run.character==='seer')for(const c of chests)c.hint=`예언자의 감응 · ${c.clue}`;
  if(run.relics.includes('eye')&&!run.relicUsed.includes('eye')){const c=chests[Math.floor(random()*chests.length)]!;c.hint=`간파 · ${c.result.name??c.result.type.toUpperCase()}`;run.relicUsed.push('eye');}
  if(run.relics.includes('thread')&&!run.relicUsed.includes('thread')){const c=chests.find(c=>c.result.type==='ruin');if(c){c.hint='운명의 실 · RUIN';run.relicUsed.push('thread');}}
 }
