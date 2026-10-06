@@ -1,5 +1,5 @@
 import Phaser from 'phaser';
-import { registerPlayerSprites, PLAYER_TEXTURE, type Facing } from '../art/playerSprites';
+import { registerPlayerSprites, skinTexture, skinAnimation, type PlayerSkin, type Facing } from '../art/playerSprites';
 
 export class PlayerVisual {
  readonly sprite: Phaser.GameObjects.Sprite;
@@ -8,11 +8,11 @@ export class PlayerVisual {
  private previous = {x: 0, y: 0};
  private distance = 0;
  private baseScale = 3;
- constructor(private scene: Phaser.Scene, readonly root: Phaser.GameObjects.Container, accent: number) {
-  registerPlayerSprites(scene);
+ constructor(private scene: Phaser.Scene, readonly root: Phaser.GameObjects.Container, accent: number, readonly skin: PlayerSkin = 'gambler') {
+  registerPlayerSprites(scene, skin);
   this.shadow = scene.add.ellipse(0, 21, 36, 12, 0x000000, .55);
   const light = scene.add.ellipse(0, 20, 44, 14, accent, .13);
-  this.sprite = scene.add.sprite(0, 0, PLAYER_TEXTURE, 0).setScale(this.baseScale);
+  this.sprite = scene.add.sprite(0, 0, skinTexture(skin), 0).setScale(this.baseScale);
   root.add([light, this.shadow, this.sprite]);
   this.play(false);
  }
@@ -23,7 +23,7 @@ export class PlayerVisual {
    (Math.abs(Math.abs(x) - Math.abs(y)) <= .12 && (this.facing === 'left' || this.facing === 'right'));
   this.facing = horizontal ? (x < 0 ? 'left' : 'right') : (y < 0 ? 'up' : 'down');
  }
- private play(walking: boolean): void { this.sprite.play(`player-${walking ? 'walk' : 'idle'}-${this.facing}`, true); }
+ private play(walking: boolean): void { this.sprite.play(skinAnimation(this.skin, walking ? 'walk' : 'idle', this.facing), true); }
  update(dx: number, dy: number, distance: number, dt: number): void {
   // Newly pressed keyboard axis wins an exact diagonal, avoiding direction flicker.
   if (dx && !this.previous.x && dy && this.previous.y) this.facing = dx < 0 ? 'left' : 'right';

@@ -7,6 +7,38 @@ await new Promise((resolve,reject)=>{server.stdout.on('data',d=>{if(d.toString()
 let browser;
 try {
  browser=await chromium.launch({executablePath:process.env.VAULT_BROWSER_EXECUTABLE||undefined,args:['--no-sandbox','--disable-dev-shm-usage']});
+ for (const mobile of [false, true]) {
+  const context = await browser.newContext({viewport:mobile?{width:360,height:800}:{width:1280,height:900},isMobile:mobile,hasTouch:mobile});
+  const page = await context.newPage();
+  const errors=[];page.on('pageerror',e=>errors.push(e.message));
+  const sheets=[];
+  for (const skin of ['gambler','seer','collector','immortal']) {
+   await page.addInitScript(()=>localStorage.setItem('devils-vault-save-v1',JSON.stringify({introSeen:true,tutorialCompleted:true,settings:{sound:false}})));
+   await page.goto('http://127.0.0.1:5175/devils-vault/');
+   await page.locator('[data-action="start"]').click();
+   assert.equal(await page.locator('.pixel-portrait').count(),4);
+   const previews=await page.locator('.pixel-portrait-sheet').evaluateAll(nodes=>nodes.map(n=>n.style.backgroundImage));
+   assert.equal(new Set(previews).size,4,'four distinct skin previews');
+   await page.locator('[data-character="'+skin+'"]').click();
+   await page.evaluate(async()=>window.playerModule=await import('/devils-vault/src/playable.ts'));
+   await page.waitForFunction(()=>window.playerModule.activeVaultScene?.visual?.sprite.anims.currentAnim);
+   const expected=skin==='gambler'?'contractor-base':'contractor-'+skin;
+   assert.equal(await page.evaluate(()=>window.playerModule.activeVaultScene.visual.sprite.texture.key),expected);
+   sheets.push(await page.evaluate(()=>window.playerModule.activeVaultScene.visual.sprite.texture.getSourceImage().toDataURL()));
+   for (const [key,direction] of [['ArrowUp','up'],['ArrowLeft','left'],['ArrowDown','down'],['ArrowRight','right']]) {
+    const prefix='player-'+(skin==='gambler'?'':skin+'-');
+    await page.keyboard.down(key);await page.waitForTimeout(130);
+    assert.equal(await page.evaluate(()=>window.playerModule.activeVaultScene.visual.sprite.anims.currentAnim.key),prefix+'walk-'+direction);
+    await page.keyboard.up(key);await page.waitForTimeout(70);
+    assert.equal(await page.evaluate(()=>window.playerModule.activeVaultScene.visual.sprite.anims.currentAnim.key),prefix+'idle-'+direction);
+   }
+   await page.setViewportSize(mobile?{width:800,height:360}:{width:1100,height:850});await page.waitForTimeout(550);
+   assert.equal(await page.evaluate(()=>window.playerModule.activeVaultScene.visual.sprite.texture.key),expected,'skin survives resize');
+   await page.setViewportSize(mobile?{width:360,height:800}:{width:1280,height:900});
+  }
+  assert.equal(new Set(sheets).size,4);assert.deepEqual(errors,[]);await context.close();
+ }
+ console.log('PASS: all four unique skins, matching animated selection previews, four-direction walk/idle and skin persistence on desktop/mobile resize.');
  for(const mobile of [false,true]) {
   const context=await browser.newContext({viewport:mobile?{width:360,height:800}:{width:1280,height:900},hasTouch:mobile,isMobile:mobile,deviceScaleFactor:mobile?3:1});
   const page=await context.newPage();const errors=[];page.on('pageerror',e=>{errors.push(e.message);console.error(e.stack)});page.on('console',m=>{if(m.type()==='error')console.error(m.text())});

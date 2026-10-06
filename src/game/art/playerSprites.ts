@@ -12,12 +12,27 @@ export const contractorPalette = {
  gold: '#e8bb63', boots: '#211c26', eye: '#ffe3a0'
 };
 
-export function registerPlayerSprites(scene: Phaser.Scene): void {
- if (!scene.textures.exists(PLAYER_TEXTURE)) {
-  const canvas = document.createElement('canvas');
-  canvas.width = FRAME_SIZE * 6; canvas.height = FRAME_SIZE * 4;
-  const ctx = canvas.getContext('2d')!;
-  const p = contractorPalette;
+export type PlayerSkin = 'gambler' | 'seer' | 'collector' | 'immortal';
+export const PLAYER_SKINS: PlayerSkin[] = ['gambler', 'seer', 'collector', 'immortal'];
+type Palette = typeof contractorPalette;
+const palettes: Record<PlayerSkin, Palette> = {
+ gambler: {...contractorPalette, coat:'#3d2935', hood:'#603c43'},
+ seer: {...contractorPalette, coat:'#292443', hood:'#554272', light:'#8875a3', rim:'#bab3dc', scarf:'#397f8b', scarflight:'#79d6d1', gold:'#b4c7e9', eye:'#9ffff0'},
+ collector: {...contractorPalette, coat:'#314339', hood:'#48634b', light:'#7d9570', rim:'#d6bd7e', scarf:'#a57939', scarflight:'#edc576', gold:'#ffcf6d'},
+ immortal: {...contractorPalette, coat:'#333640', hood:'#515667', light:'#87909b', rim:'#c1c3bb', scarf:'#9c293b', scarflight:'#ec5f69', skin:'#ced0bd', gold:'#a2abb4', eye:'#ff756b'}
+};
+export function playerSkin(id: string | undefined): PlayerSkin {
+ return PLAYER_SKINS.includes(id as PlayerSkin) ? id as PlayerSkin : 'gambler';
+}
+export const skinTexture = (skin: PlayerSkin) => skin === 'gambler' ? PLAYER_TEXTURE : `contractor-${skin}`;
+export const skinAnimation = (skin: PlayerSkin, state: 'idle' | 'walk', facing: Facing) =>
+ `player-${skin === 'gambler' ? '' : skin + '-'}${state}-${facing}`;
+
+export function createPlayerSheet(skin: PlayerSkin): HTMLCanvasElement {
+ const canvas = document.createElement('canvas');
+ canvas.width = FRAME_SIZE * 6; canvas.height = FRAME_SIZE * 4;
+ const ctx = canvas.getContext('2d')!;
+ const p = palettes[skin];
   DIRECTIONS.forEach((direction, row) => {
    for (let frame = 0; frame < 6; frame++) {
     const walking = frame >= 2, phase = walking ? frame - 2 : 0;
@@ -56,18 +71,46 @@ export function registerPlayerSprites(scene: Phaser.Scene): void {
      rect(left ? 14 : 8, 13 + bob, 2, 5, p.light);
     }
     if (!walking && frame === 1) rect(8, 11, 7, 1, p.scarflight);
+    // Distinct silhouettes and accessories, shared by preview and gameplay.
+    if (skin === 'gambler') {
+     rect(5, 5 + bob, 14, 2, p.outline); rect(8, 1 + bob, 8, 5, p.coat);
+     rect(8, 4 + bob, 8, 1, p.scarf); rect(7, 5 + bob, 11, 1, p.rim);
+    } else if (skin === 'seer') {
+     rect(10, 1 + bob, 4, 2, p.hood); rect(11, 2 + bob, 2, 1, p.eye);
+     rect(7, 17 + bob, 10, 3, p.hood);
+     if (direction !== 'up') { rect(10, 12 + bob, 4, 3, p.gold); rect(11, 12 + bob, 2, 2, p.eye); }
+    } else if (skin === 'collector') {
+     rect(16, 11 + bob, 4, 7, p.outline); rect(17, 12 + bob, 2, 5, p.gold);
+     rect(8, 3 + bob, 8, 1, p.gold); rect(11, 2 + bob, 2, 2, p.gold);
+     if (direction === 'up') { rect(8, 12 + bob, 7, 6, p.boots); rect(9, 13 + bob, 5, 4, p.rim); }
+    } else {
+     rect(7, 3 + bob, 2, 2, p.rim); rect(15, 3 + bob, 2, 2, p.rim);
+     rect(8, 17 + bob, 2, 3, p.scarf); rect(14, 18 + bob, 2, 2, p.scarf);
+     if (direction === 'down') { rect(11, 7 + bob, 2, 3, p.skin); rect(10, 9 + bob, 4, 1, p.rim); }
+    }
    }
   });
-  const texture = scene.textures.addCanvas(PLAYER_TEXTURE, canvas)!;
+ return canvas;
+}
+const previewSheets = new Map<PlayerSkin, string>();
+export function playerPreview(skin: PlayerSkin): string {
+ if (!previewSheets.has(skin)) previewSheets.set(skin, createPlayerSheet(skin).toDataURL());
+ return `<span class="pixel-portrait" role="img" aria-label="캐릭터 도트 미리보기"><span class="pixel-portrait-sheet" style="background-image:url('${previewSheets.get(skin)}')"></span></span>`;
+}
+export function registerPlayerSprites(scene: Phaser.Scene, skin: PlayerSkin = 'gambler'): void {
+ const textureKey = skinTexture(skin);
+ if (!scene.textures.exists(textureKey)) {
+  const canvas = createPlayerSheet(skin);
+  const texture = scene.textures.addCanvas(textureKey, canvas)!;
   texture.setFilter(Phaser.Textures.FilterMode.NEAREST);
   for (let row = 0; row < 4; row++) for (let col = 0; col < 6; col++)
    texture.add(row * 6 + col, 0, col * 24, row * 24, 24, 24);
  }
  DIRECTIONS.forEach((direction, row) => {
   for (const state of ['idle', 'walk'] as const) {
-   const key = `player-${state}-${direction}`;
+   const key = skinAnimation(skin, state, direction);
    if (!scene.anims.exists(key)) scene.anims.create({key,
-    frames: scene.anims.generateFrameNumbers(PLAYER_TEXTURE, {start: row * 6 + (state === 'walk' ? 2 : 0), end: row * 6 + (state === 'walk' ? 5 : 1)}),
+    frames: scene.anims.generateFrameNumbers(textureKey, {start: row * 6 + (state === 'walk' ? 2 : 0), end: row * 6 + (state === 'walk' ? 5 : 1)}),
     frameRate: state === 'walk' ? 9 : 2, repeat: -1});
   }
  });

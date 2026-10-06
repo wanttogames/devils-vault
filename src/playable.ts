@@ -3,7 +3,7 @@ export { scene as activeVaultScene };
 import './playable.css';
 import { PlayerVisual } from './game/entities/Player';
 import { WorldTextLayer } from './game/ui/WorldText';
-import type { Facing } from './game/art/playerSprites';
+import { playerSkin, type Facing } from './game/art/playerSprites';
 import { registerVaultArt, drawVaultRoom } from './game/art/vaultSprites';
 
 type Kind='chest'|'continue'|'escape';
@@ -40,7 +40,7 @@ class VaultScene extends Phaser.Scene{
   const xs=this.room.chests.length===1?[.5]:this.room.chests.length===2?[.36,.64]:[.22,.5,.78];this.room.chests.forEach((c,i)=>this.addChest(c,w*(xs[i]??.5),h*.32,i));
   const dx=this.room.doors.length>1?[.28,.72]:[.5];this.room.doors.forEach((d,i)=>this.addDoor(d,w*(dx[i]??.5),h*(w<600?.60:.72)));
   const spawn=preserve;preserve=null;this.player=this.add.container(w*(spawn?.x??.5),h*(spawn?.y??(this.room.doors.length?.48:.76))).setDepth(30);
-  this.visual=new PlayerVisual(this,this.player,accent);if(spawn){this.visual.facing=spawn.facing;this.visual.update(0,0,0,16);}
+  this.visual=new PlayerVisual(this,this.player,accent,playerSkin(document.querySelector<HTMLElement>('.run-identity')?.dataset.playerSkin));if(spawn){this.visual.facing=spawn.facing;this.visual.update(0,0,0,16);}
   this.prompt=this.textLayer.text(w/2,h-54,'',{fontFamily:'Georgia,serif',fontSize:w<600?'12px':'15px',color:'#f5d69a',backgroundColor:'rgba(10,7,6,.86)',padding:{x:12,y:7}}).setOrigin(.5).setDepth(40).setVisible(false);
   this.info=this.textLayer.text(w/2,h-28,'',{fontFamily:'Arial,sans-serif',fontSize:w<600?'12px':'13px',color:'#cbbca8',align:'center',wordWrap:{width:Math.min(340,w-40)}}).setOrigin(.5,0).setDepth(40).setVisible(false);
   this.keys=this.input.keyboard?.addKeys({W:Phaser.Input.Keyboard.KeyCodes.W,A:Phaser.Input.Keyboard.KeyCodes.A,S:Phaser.Input.Keyboard.KeyCodes.S,D:Phaser.Input.Keyboard.KeyCodes.D,UP:Phaser.Input.Keyboard.KeyCodes.UP,DOWN:Phaser.Input.Keyboard.KeyCodes.DOWN,LEFT:Phaser.Input.Keyboard.KeyCodes.LEFT,RIGHT:Phaser.Input.Keyboard.KeyCodes.RIGHT,E:Phaser.Input.Keyboard.KeyCodes.E,SPACE:Phaser.Input.Keyboard.KeyCodes.SPACE}) as Record<string,any>;

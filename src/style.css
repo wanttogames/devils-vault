@@ -422,3 +422,11 @@ html[data-floor] .room-rune .sigil-art { stroke: var(--floor-glow); }
 @media(max-width:760px) { .modal-copy { font-size:11px; } }
 .hud .hud-gold strong { white-space:normal; overflow-wrap:anywhere; }
 @media(max-width:760px) { .hud .hud-risk strong { font-size:18px; }.result-number strong { font-size:clamp(24px,8vw,40px); overflow-wrap:anywhere; }.result-number { max-width:100%; }.soul b { overflow-wrap:anywhere; max-width:90px; }.soul { min-width:0; } }
+
+/* Native text stays crisp; only the 24px art is enlarged with nearest pixels. */
+.pixel-portrait { display:block; width:72px; height:72px; overflow:hidden; flex-shrink:0; }
+.pixel-portrait-sheet { display:block; width:72px; height:72px; background-size:432px 288px; background-repeat:no-repeat; image-rendering:pixelated; animation:portrait-breathe 1s steps(1) infinite; }
+@keyframes portrait-breathe { 0%,100% { background-position:0 0; } 50% { background-position:-72px 0; } }
+.character-card:focus-visible { outline:2px solid #f3d899; outline-offset:3px; }
+.character-emblem { min-height:72px; }
+@media (prefers-reduced-motion:reduce) { .pixel-portrait-sheet { animation:none; } }
