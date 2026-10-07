@@ -9,7 +9,7 @@ import { registerVaultArt, drawVaultRoom } from './game/art/vaultSprites';
 type Kind='chest'|'continue'|'escape';
 type Chest={source:HTMLButtonElement;tier:string;title:string;risk:string;clue:string;revealed:boolean;selected:boolean};
 type Door={source:HTMLButtonElement;kind:'continue'|'escape';title:string;subtitle:string};
-type Room={host:HTMLElement;theme:string;floor:string;title:string;chests:Chest[];doors:Door[]};
+type Room={host:HTMLElement;theme:string;floor:string;title:string;risk:number;riskLevel:string;chests:Chest[];doors:Door[]};
 type Target={kind:Kind;x:number;y:number;r:number;title:string;subtitle:string;source:HTMLButtonElement;view:Phaser.GameObjects.Container;sprite:Phaser.GameObjects.Sprite;glow:Phaser.GameObjects.Ellipse};
 
 const input={x:0,y:0};
@@ -28,14 +28,15 @@ function snapshot(el:HTMLElement):Room{
  const next=document.querySelector<HTMLButtonElement>('[data-action="continue"]'),exit=document.querySelector<HTMLButtonElement>('[data-action="escape"]');
  if(next)doors.push({source:next,kind:'continue',title:'DEEPER',subtitle:'더 깊은 금고로'});
  if(exit)doors.push({source:exit,kind:'escape',title:'ESCAPE',subtitle:'현재 보상을 확정'});
- return{host:el,theme:document.documentElement.dataset.floor||'forgotten',floor:text(document,'.floor-hud strong','B1'),title:text(document,'.special-banner h3',text(document,'.game-heading h2','INNER VAULT')),chests,doors};
+ const rawRisk=Number(el.dataset.risk??0),risk=Number.isFinite(rawRisk)?Math.max(0,Math.min(100,rawRisk)):0;
+ return{host:el,theme:document.documentElement.dataset.floor||'forgotten',floor:text(document,'.floor-hud strong','B1'),title:text(document,'.special-banner h3',text(document,'.game-heading h2','INNER VAULT')),risk,riskLevel:el.dataset.riskLevel||'calm',chests,doors};
 }
 
 class VaultScene extends Phaser.Scene{
  private textLayer!:WorldTextLayer;private room:Room;private player:any;private visual!:PlayerVisual;private interacting=false;private keys!:Record<string,any>;private targets:Target[]=[];private near:Target|null=null;private prompt:any;private info:any;private blockers:any[]=[];
  constructor(room:Room){super({key:`vault-world-${Date.now()}-${Math.random()}`});this.room=room;}
  create():void{
-  scene=this;const w=this.scale.width,h=this.scale.height,[,,accent]=themes[this.room.theme]||themes.forgotten!;this.textLayer=new WorldTextLayer(this,this.room.host,w,h);registerVaultArt(this);this.blockers=drawVaultRoom(this,w,h,this.room.theme);
+  scene=this;const w=this.scale.width,h=this.scale.height,[,,accent]=themes[this.room.theme]||themes.forgotten!;this.textLayer=new WorldTextLayer(this,this.room.host,w,h);registerVaultArt(this);this.blockers=drawVaultRoom(this,w,h,this.room.theme);this.addRiskAtmosphere(w,h);
   this.textLayer.text(w/2,27,`${this.room.floor} · ${this.room.title}`,{fontFamily:'Georgia,serif',fontSize:`${Math.max(13,Math.min(20,w/48))}px`,color:'#efdab6',wordWrap:{width:w-48}}).setOrigin(.5).setDepth(20);
   const xs=this.room.chests.length===1?[.5]:this.room.chests.length===2?[.36,.64]:[.22,.5,.78];this.room.chests.forEach((c,i)=>this.addChest(c,w*(xs[i]??.5),h*.32,i));
   const dx=this.room.doors.length>1?[.28,.72]:[.5];this.room.doors.forEach((d,i)=>this.addDoor(d,w*(dx[i]??.5),h*(w<600?.60:.72)));
@@ -48,6 +49,13 @@ class VaultScene extends Phaser.Scene{
   const resize=()=>{if(Math.abs(this.scale.width-w)<2&&Math.abs(this.scale.height-h)<2)return;resizeTimer?.remove();resizeTimer=this.time.delayedCall(120,()=>{if(this.interacting){resize();return;}preserve={x:this.player.x/w,y:this.player.y/h,facing:this.visual.facing};if(this.room.host.isConnected)mount(this.room.host);});};
   this.scale.on(Phaser.Scale.Events.RESIZE,resize);
   this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{this.scale.off(Phaser.Scale.Events.RESIZE,resize);if(scene===this)scene=null;});
+ }
+ private addRiskAtmosphere(w:number,h:number):void{
+  const risk=Phaser.Math.Clamp(this.room.risk,0,100);if(risk<15)return;const level=this.room.riskLevel,color=level==='watch'?0xa85a32:level==='danger'?0xb4372f:0xd12626,strength=Phaser.Math.Clamp((risk-10)/70,.08,.82);
+  const veil=this.add.rectangle(w/2,h/2,w,h,color,.025+strength*.07).setDepth(6),frame=this.add.rectangle(w/2,h/2,Math.max(40,w-10),Math.max(40,h-10)).setStrokeStyle(level==='extreme'?3:2,color,.12+strength*.32).setDepth(28);
+  const reduced=document.documentElement.classList.contains('reduce-motion')||window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced)return;
+  if(level==='danger'||level==='extreme')this.tweens.add({targets:[veil,frame],alpha:{from:.56,to:1},duration:level==='extreme'?720:1250,yoyo:true,repeat:-1,ease:'Sine.InOut'});
+  const motes=level==='extreme'?9:level==='danger'?5:2;for(let i=0;i<motes;i++){const x=((i*97+41)%100)/100*w,y=h*(.72+((i*23)%20)/100),mote=this.add.rectangle(x,y,level==='extreme'?3:2,level==='extreme'?3:2,color,.32+strength*.3).setDepth(7);this.tweens.add({targets:mote,y:h*(.18+((i*19)%30)/100),x:x+((i%2?1:-1)*(10+(i%3)*7)),alpha:0,duration:2100+(i%4)*360,delay:i*120,repeat:-1,repeatDelay:220+(i%3)*130});}
  }
  private addChest(c:Chest,x:number,y:number,i:number):void{
   const compact=this.scale.width<600,scale=compact?2:3,color=tierColor[c.tier]??tierColor.common!,view=this.add.container(x,y).setDepth(12);

@@ -183,10 +183,20 @@ footer { display: flex; align-items: center; gap: 8px; margin-top: auto; padding
 .relic-label .ui-icon { width: 14px; height: 14px; }
 .relic-bar > small { font-size: 9px; color: #6e8066; }
 .relic-chip { padding: 7px 10px; border: 1px solid #b1a26b38; background: #232d1b5c; color: #beb28c; font-size: 9px; }
-.danger .hud, .extreme .hud { border-color: #a2544666; background: linear-gradient(115deg, #3d251f66, #151c13a8); }
-.danger .room-rune, .extreme .room-rune { color: #a74f4266; }
-.danger .game-heading h2, .extreme .game-heading h2 { color: #db9b82; }
-.extreme .room-arch { box-shadow: inset 0 0 80px #b2412420; }
+.risk-state { display:inline-flex; align-items:center; margin-left:7px; padding:2px 6px; border:1px solid currentColor; border-radius:999px; font-size:7px; letter-spacing:.08em; opacity:.82; vertical-align:1px; }
+.risk-watch .hud { border-color:#9b6c3f55; background:linear-gradient(115deg,#3b2b1f55,#151c13a8); }
+.risk-watch .game-heading h2 { color:#d4b184; }
+.risk-watch .risk-text,.risk-watch .risk-state { color:#d79a64; }
+.risk-danger .hud,.risk-extreme .hud { border-color:#a254467d; background:linear-gradient(115deg,#48231f7a,#151713b8); }
+.risk-danger .room-rune,.risk-extreme .room-rune { color:#b557486f; }
+.risk-danger .game-heading h2,.risk-extreme .game-heading h2 { color:#e0a08b; }
+.risk-danger .risk-text,.risk-danger .risk-state { color:#e17f69; }
+.risk-danger .risk-track i { background:#c95745; box-shadow:0 0 8px #c9574577; }
+.risk-extreme .hud { border-color:#d25a4a99; background:linear-gradient(115deg,#5a211fc4,#15110fd1); box-shadow:inset 0 0 28px #b6291d1f,0 0 24px #6e1f1822; }
+.risk-extreme .game-heading h2 { color:#ef8a73; text-shadow:0 0 14px #b72c2455; }
+.risk-extreme .risk-text,.risk-extreme .risk-state { color:#ff705d; }
+.risk-extreme .risk-track i { background:#df3f31; box-shadow:0 0 12px #df3f31aa; }
+.risk-extreme .room-arch { box-shadow:inset 0 0 95px #c32f2438; }
 .tutorial-hint { display: flex; align-items: center; gap: 14px; padding: 14px 18px; border: 1px solid #bdab7566; background: #28321e; font-size: 11px; color: #cccfb7; margin-top: 18px; }
 .tutorial-hint > b { font: 18px var(--serif); color: #bfa56d; }
 .tutorial-hint > button { display: flex; align-items: center; gap: 7px; min-height: 44px; background: none; border: 0; color: #e3cc90; cursor: pointer; margin-left: auto; white-space: nowrap; font-size: 11px; }

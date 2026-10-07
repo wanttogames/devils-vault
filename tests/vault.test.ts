@@ -13,6 +13,7 @@ import { createRun, floorBonus, trackChest, trackFloor, summary } from '../src/g
 import { ChestTierManager } from '../src/game/systems/ChestTierManager';
 import { createChests, rewardWeights, riskForRound, finalChest, applyReward } from '../src/game/systems/RewardManager';
 import { clueAccuracy, clueForResult, signalForResult } from '../src/game/systems/ChestClueSystem';
+import { vaultRiskPresentation } from '../src/game/systems/VaultRiskPresentation';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -56,6 +57,11 @@ test('chest omens hint at outcome families, sometimes mislead, and improve with 
  assert.equal(clues.length,3);assert.ok(clues.every(c=>c.clue.length>12&&c.clueSignal));
  const seerRun=createRun('seer'),seerChests=createChests(save,seerRun,seeded());
  assert.ok(seerChests.every(c=>c.hint?.startsWith('예언자의 감응 · ')));
+});
+test('vault threat presentation follows actual maximum RUIN probability',()=>{
+ const cases:[[number,string,string],...Array<[number,string,string]>]=[[0,'calm','안정'],[14.9,'calm','안정'],[15,'watch','경계'],[29.9,'watch','경계'],[30,'danger','위험'],[44.9,'danger','위험'],[45,'extreme','치명적'],[85,'extreme','치명적']];
+ for(const [risk,level,label] of cases){const state=vaultRiskPresentation(risk);assert.equal(state.level,level);assert.equal(state.label,label);assert.ok(state.title.length>5);}
+ assert.equal(vaultRiskPresentation(-5).risk,0);assert.equal(vaultRiskPresentation(500).risk,100);assert.equal(vaultRiskPresentation(Number.NaN).risk,0);
 });
 test('Relic room offers three distinct visible relics; shop charges run gold once',()=>{
  const save=fresh(),run=createRun('gambler');run.phase='special';run.activeSpecial='relic';const cs=createChests(save,run,seeded());assert.equal(new Set(cs.map(c=>c.result.detail)).size,3);for(const c of cs){assert.equal(c.result.type,'relic');assert.equal(c.hint,c.result.name);assert.equal(c.ruinChance,0);}

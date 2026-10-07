@@ -15,3 +15,13 @@
 .vault-world-text{position:absolute;display:block;max-width:calc(100% - 24px);font-family:"Malgun Gothic","Apple SD Gothic Neo",system-ui,sans-serif;line-height:1.35;text-align:center;white-space:pre-line;overflow-wrap:anywhere;text-shadow:0 1px 1px #000;image-rendering:auto;pointer-events:none}
 .vault-world-text[hidden]{display:none}
 .vault-world-text-panel{padding:6px 10px;border:1px solid #d3ad6340;border-radius:5px;text-shadow:none;white-space:nowrap}
+
+
+/* Actual RUIN probability drives the playable room's threat treatment. */
+.vault-door.playable-active[data-risk-level="watch"]{box-shadow:inset 0 0 44px #8f4b281f,0 0 22px #7d442017}
+.vault-door.playable-active[data-risk-level="danger"]{box-shadow:inset 0 0 72px #a52d2730,0 0 30px #7d201c24}
+.vault-door.playable-active[data-risk-level="extreme"]{box-shadow:inset 0 0 100px #d12e2742,0 0 38px #a1201c35;animation:vault-threat-pulse 1.45s ease-in-out infinite}
+.vault-door.playable-active[data-risk-level="danger"] .vault-world-help,.vault-door.playable-active[data-risk-level="extreme"] .vault-world-help{border-color:#c86a5840;color:#edc0b5}
+.vault-door.playable-active[data-risk-level="extreme"] .vault-interact.is-ready{border-color:#ff9c88;box-shadow:0 0 19px #d83b3277,0 8px 22px #0007}
+@keyframes vault-threat-pulse{50%{box-shadow:inset 0 0 125px #e1362d58,0 0 46px #ba211d43}}
+@media (prefers-reduced-motion:reduce){.vault-door.playable-active[data-risk-level="extreme"]{animation:none}}
