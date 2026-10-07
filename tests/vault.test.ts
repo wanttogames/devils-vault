@@ -17,6 +17,7 @@ import { vaultRiskPresentation } from '../src/game/systems/VaultRiskPresentation
 import { acceptWhisper, applyWhisperReveal, declineWhisper, rollWhisper, whisperChance } from '../src/game/systems/DevilWhisperSystem';
 import { applyRiskThresholdClues, escapeLockedByRisk, riskThresholdEvents } from '../src/game/systems/VaultRiskThresholdSystem';
 import { CHEST_PERSONALITIES, applyPersonalityWeights, personalityClueAccuracy, personalityRewardMultiplier, personalityRiskModifier, rollChestPersonality } from '../src/game/systems/ChestPersonalitySystem';
+import { soundProfileForRisk } from '../src/game/audio/AudioProfile';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -69,6 +70,12 @@ test('chest personalities change risk, rewards, odds and clue reliability',()=>{
  const base={gold:56,multiplier:18,treasure:11,relic:7,curse:6,ruin:2,jackpot:.5};const blood={...base};applyPersonalityWeights(blood,'blood');assert.ok(blood.jackpot>base.jackpot);assert.ok(blood.curse>base.curse);
  const greed={...base};applyPersonalityWeights(greed,'greedy');assert.ok(greed.treasure>base.treasure);assert.ok(greed.jackpot>base.jackpot);
  const save=fresh(),run=createRun('gambler'),chests=createChests(save,run,seeded(22));assert.ok(chests.every(c=>c.personality));for(const c of chests)assert.equal(c.ruinChance,riskForRound(run.round,save,run,c.tier,c.personality));
+});
+test('sound profile intensifies monotonically across RUIN thresholds',()=>{
+ const risks=[0,15,30,45,60,85],profiles=risks.map(soundProfileForRisk);
+ assert.deepEqual(profiles.map(p=>p.level),['quiet','watch','danger','severe','critical','critical']);
+ for(let i=1;i<profiles.length;i++){assert.ok(profiles[i]!.droneGain>=profiles[i-1]!.droneGain);assert.ok(profiles[i]!.noiseGain>=profiles[i-1]!.noiseGain);assert.ok(profiles[i]!.heartbeatMs<=profiles[i-1]!.heartbeatMs);}
+ assert.equal(soundProfileForRisk(Number.NaN).risk,0);assert.equal(soundProfileForRisk(500).risk,100);
 });
 test('vault threat presentation follows actual maximum RUIN probability',()=>{
  const cases:[[number,string,string],...Array<[number,string,string]>]=[[0,'calm','안정'],[14.9,'calm','안정'],[15,'watch','경계'],[29.9,'watch','경계'],[30,'danger','위험'],[44.9,'danger','위험'],[45,'extreme','치명적'],[85,'extreme','치명적']];
