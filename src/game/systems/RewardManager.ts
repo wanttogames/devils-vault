@@ -5,15 +5,17 @@ import { SPECIAL_VAULTS, FINAL_CHEST, SPECIAL_BALANCE } from '../data/specialVau
 import type { ChestTier } from '../types/chest';
 import { addChestClues, clueAccuracy } from './ChestClueSystem';
 import { applyRiskThresholdClues } from './VaultRiskThresholdSystem';
+import { applyPersonalityWeights, personalityClueAccuracy, personalityRewardMultiplier, personalityRiskModifier, rollChestPersonality } from './ChestPersonalitySystem';
+import type { ChestPersonalityId } from '../types/chestPersonality';
 
-export function riskForRound(_round:number,_save:SaveData,run:RunState,tier:ChestTier='common'):number {
+export function riskForRound(_round:number,_save:SaveData,run:RunState,tier:ChestTier='common',personality?:ChestPersonalityId):number {
  const floor=FloorManager.definition(run);
  const base=BALANCE.danger[Math.min(run.currentFloorRound-1,BALANCE.danger.length-1)]!;
- const risk=base+floor.riskModifier+ChestTierManager.definition(tier).riskModifier+run.riskBonus+(run.relics.includes('contract')?10:0)-(run.character==='gambler'?2:0);
+ const risk=base+floor.riskModifier+ChestTierManager.definition(tier).riskModifier+run.riskBonus+personalityRiskModifier(personality)+(run.relics.includes('contract')?10:0)-(run.character==='gambler'?2:0);
  const room=run.activeSpecial&&run.phase==='special'?SPECIAL_VAULTS.find(v=>v.id===run.activeSpecial):null;
  return Math.min(85,Math.max(.5,risk)*(room?.riskMultiplier??1));
 }
-export function rewardWeights(save:SaveData,run:RunState,tier:ChestTier):Record<ResultType,number> {
+export function rewardWeights(save:SaveData,run:RunState,tier:ChestTier,personality?:ChestPersonalityId):Record<ResultType,number> {
  const floor=FloorManager.definition(run),def=ChestTierManager.definition(tier);
  const w:Record<ResultType,number>={...BALANCE.baseWeights};
  w.gold+=(save.upgrades.fortune??0)*2;
@@ -22,17 +24,18 @@ export function rewardWeights(save:SaveData,run:RunState,tier:ChestTier):Record<
  if(run.relics.includes('crown')){w.jackpot+=3;w.curse+=4;}
  if(run.fever){w.jackpot+=2.5;w.treasure+=6;}
  for(const key of Object.keys(def.weights) as ResultType[])w[key]*=def.weights[key]!;
+ applyPersonalityWeights(w,personality);
  if(run.phase==='special'&&run.activeSpecial==='gold'){w.curse=0;w.gold*=2;}
  if(run.phase==='special'&&run.activeSpecial==='blood'){w.jackpot*=2;w.curse*=2;}
- const risk=riskForRound(run.round,save,run,tier);
+ const risk=riskForRound(run.round,save,run,tier,personality);
  const safe=Object.entries(w).reduce((n,[k,v])=>n+(k==='ruin'?0:v),0);
  w.ruin=risk/(100-risk)*safe;
  return w;
 }
-function resultFor(type:ResultType,run:RunState,tier:ChestTier,random:()=>number):ChestResult {
+function resultFor(type:ResultType,run:RunState,tier:ChestTier,random:()=>number,personality?:ChestPersonalityId):ChestResult {
  const pick=<T>(xs:readonly T[])=>xs[Math.floor(random()*xs.length)]!;
  const floor=FloorManager.definition(run),room=run.phase==='special'?SPECIAL_VAULTS.find(v=>v.id===run.activeSpecial):null;
- const rewardScale=floor.rewardMultiplier*ChestTierManager.definition(tier).rewardMultiplier*(room?.rewardMultiplier??1);
+ const rewardScale=floor.rewardMultiplier*ChestTierManager.definition(tier).rewardMultiplier*(room?.rewardMultiplier??1)*personalityRewardMultiplier(personality,run.phase==='special'?run.activeSpecial:null);
  const base={type,rewardScale};
  if(type==='gold')return {...base,amount:pick(BALANCE.goldValues),name:'금화'};
  if(type==='multiplier')return {...base,amount:(pick([1.25,1.5,2,3])+(tier==='epic'?.5:tier==='legendary'?1:tier==='mythic'?2:0))*(room?.rewardMultiplier??1),name:'배율 상승'};
@@ -45,7 +48,7 @@ function resultFor(type:ResultType,run:RunState,tier:ChestTier,random:()=>number
 export function applyHints(chests:Chest[],save:SaveData,run:RunState,random=Math.random){
  const insight=save.upgrades.insight??0;
  const accuracy=clueAccuracy(run.character,insight);
- addChestClues(chests,random,accuracy);
+ for(const chest of chests)addChestClues([chest],random,personalityClueAccuracy(chest.personality,accuracy));
  if(run.character==='seer')for(const c of chests)c.hint=`예언자의 감응 · ${c.clue}`;
  if(run.relics.includes('eye')&&!run.relicUsed.includes('eye')){const c=chests[Math.floor(random()*chests.length)]!;c.hint=`간파 · ${c.result.name??c.result.type.toUpperCase()}`;run.relicUsed.push('eye');}
  if(run.relics.includes('thread')&&!run.relicUsed.includes('thread')){const c=chests.find(c=>c.result.type==='ruin');if(c){c.hint='운명의 실 · RUIN';run.relicUsed.push('thread');}}
@@ -53,14 +56,15 @@ export function applyHints(chests:Chest[],save:SaveData,run:RunState,random=Math
 export function createChests(save:SaveData,run:RunState,random=Math.random):Chest[]{
  const floor=FloorManager.definition(run);
  const chests:Chest[]=Array.from({length:3},()=>{
+  const personality=rollChestPersonality(random);
   const tier=run.phase==='special'&&run.activeSpecial==='gold'?weightedRandom<ChestTier>([{value:'rare',weight:70},{value:'epic',weight:25},{value:'legendary',weight:5}],random):run.phase==='special'&&run.activeSpecial==='blood'?weightedRandom<ChestTier>([{value:'epic',weight:55},{value:'legendary',weight:35},{value:'mythic',weight:10}],random):ChestTierManager.roll(floor.chestTierWeights,random);
-  const weights=rewardWeights(save,run,tier);
+  const weights=rewardWeights(save,run,tier,personality);
   const type=weightedRandom(Object.entries(weights).map(([value,weight])=>({value:value as ResultType,weight})),random);
-  return {tier,ruinChance:riskForRound(run.round,save,run,tier),clue:ChestTierManager.definition(tier).description,result:resultFor(type,run,tier,random)};
+  return {tier,personality,ruinChance:riskForRound(run.round,save,run,tier,personality),clue:ChestTierManager.definition(tier).description,result:resultFor(type,run,tier,random,personality)};
  });
  if(run.phase==='special'&&run.activeSpecial==='cursed'){
   // Same appearance on all three seals; shuffling conceals the single trap.
-  for(let i=0;i<3;i++){const c=chests[i]!;c.tier='epic';c.ruinChance=SPECIAL_BALANCE.cursedRuinChance/3*100;c.clue='세 봉인 중 하나가 저주받았다';c.result=resultFor(i<2?(i===0?'treasure':'jackpot'):(random()<SPECIAL_BALANCE.cursedRuinChance?'ruin':'curse'),run,'epic',random);if(i===2&&c.result.type==='curse'){c.result.detail='현재 골드 40% 감소';c.result.curseLoss=.4;}}
+  for(let i=0;i<3;i++){const c=chests[i]!;c.personality=undefined;c.tier='epic';c.ruinChance=SPECIAL_BALANCE.cursedRuinChance/3*100;c.clue='세 봉인 중 하나가 저주받았다';c.result=resultFor(i<2?(i===0?'treasure':'jackpot'):(random()<SPECIAL_BALANCE.cursedRuinChance?'ruin':'curse'),run,'epic',random);if(i===2&&c.result.type==='curse'){c.result.detail='현재 골드 40% 감소';c.result.curseLoss=.4;}}
   for(let i=2;i>0;i--){const j=Math.floor(random()*(i+1));[chests[i],chests[j]]=[chests[j]!,chests[i]!];}
  }
  if(run.phase==='special'&&run.activeSpecial==='relic'){

@@ -16,6 +16,7 @@ import { clueAccuracy, clueForResult, signalForResult } from '../src/game/system
 import { vaultRiskPresentation } from '../src/game/systems/VaultRiskPresentation';
 import { acceptWhisper, applyWhisperReveal, declineWhisper, rollWhisper, whisperChance } from '../src/game/systems/DevilWhisperSystem';
 import { applyRiskThresholdClues, escapeLockedByRisk, riskThresholdEvents } from '../src/game/systems/VaultRiskThresholdSystem';
+import { CHEST_PERSONALITIES, applyPersonalityWeights, personalityClueAccuracy, personalityRewardMultiplier, personalityRiskModifier, rollChestPersonality } from '../src/game/systems/ChestPersonalitySystem';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -59,6 +60,15 @@ test('chest omens hint at outcome families, sometimes mislead, and improve with 
  assert.equal(clues.length,3);assert.ok(clues.every(c=>c.clue.length>12&&c.clueSignal));
  const seerRun=createRun('seer'),seerChests=createChests(save,seerRun,seeded());
  assert.ok(seerChests.every(c=>c.hint?.startsWith('예언자의 감응 · ')));
+});
+test('chest personalities change risk, rewards, odds and clue reliability',()=>{
+ const random=seeded(991),seen=new Set<string>();for(let i=0;i<4000;i++)seen.add(rollChestPersonality(random));assert.deepEqual([...seen].sort(),CHEST_PERSONALITIES.map(p=>p.id).sort());
+ assert.ok(personalityRiskModifier('greedy')>0);assert.ok(personalityRiskModifier('blood')>0);assert.ok(personalityRiskModifier('coward')<0);assert.equal(personalityRiskModifier('liar'),0);
+ assert.ok(personalityRewardMultiplier('greedy',null)>1);assert.ok(personalityRewardMultiplier('coward',null)<1);assert.equal(personalityRewardMultiplier('coward','blood'),1);
+ assert.ok(personalityClueAccuracy('liar',.84)<.55);assert.equal(personalityClueAccuracy('greedy',.84),.84);
+ const base={gold:56,multiplier:18,treasure:11,relic:7,curse:6,ruin:2,jackpot:.5};const blood={...base};applyPersonalityWeights(blood,'blood');assert.ok(blood.jackpot>base.jackpot);assert.ok(blood.curse>base.curse);
+ const greed={...base};applyPersonalityWeights(greed,'greedy');assert.ok(greed.treasure>base.treasure);assert.ok(greed.jackpot>base.jackpot);
+ const save=fresh(),run=createRun('gambler'),chests=createChests(save,run,seeded(22));assert.ok(chests.every(c=>c.personality));for(const c of chests)assert.equal(c.ruinChance,riskForRound(run.round,save,run,c.tier,c.personality));
 });
 test('vault threat presentation follows actual maximum RUIN probability',()=>{
  const cases:[[number,string,string],...Array<[number,string,string]>]=[[0,'calm','안정'],[14.9,'calm','안정'],[15,'watch','경계'],[29.9,'watch','경계'],[30,'danger','위험'],[44.9,'danger','위험'],[45,'extreme','치명적'],[85,'extreme','치명적']];

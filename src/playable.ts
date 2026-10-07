@@ -7,7 +7,7 @@ import { playerSkin, type Facing } from './game/art/playerSprites';
 import { registerVaultArt, drawVaultRoom } from './game/art/vaultSprites';
 
 type Kind='chest'|'continue'|'escape';
-type Chest={source:HTMLButtonElement;tier:string;title:string;risk:string;clue:string;revealed:boolean;selected:boolean};
+type Chest={source:HTMLButtonElement;tier:string;title:string;risk:string;clue:string;personality:string;revealed:boolean;selected:boolean};
 type Door={source:HTMLButtonElement;kind:'continue'|'escape';title:string;subtitle:string};
 type Room={host:HTMLElement;theme:string;floor:string;title:string;risk:number;riskLevel:string;chests:Chest[];doors:Door[]};
 type Target={kind:Kind;x:number;y:number;r:number;title:string;subtitle:string;source:HTMLButtonElement;view:Phaser.GameObjects.Container;sprite:Phaser.GameObjects.Sprite;glow:Phaser.GameObjects.Ellipse};
@@ -22,7 +22,7 @@ const text=(root:ParentNode,selector:string,fallback='')=>root.querySelector<HTM
 function snapshot(el:HTMLElement):Room{
  const chests=[...el.querySelectorAll<HTMLButtonElement>('[data-chest]')].map((source,i):Chest=>({
   source,tier:text(source,'.tier-label','common').toLowerCase(),title:text(source,'.chest-body b',`SEAL ${String.fromCharCode(65+i)}`),
-  risk:text(source,'.chest-risk','위험 미확인'),clue:text(source,'.chest-clue','봉인된 기운'),revealed:source.disabled||source.classList.contains('revealed'),selected:source.classList.contains('selected')
+  risk:text(source,'.chest-risk','위험 미확인'),clue:text(source,'.chest-clue','봉인된 기운'),personality:text(source,'.chest-personality',''),revealed:source.disabled||source.classList.contains('revealed'),selected:source.classList.contains('selected')
  }));
  const doors:Door[]=[];
  const next=document.querySelector<HTMLButtonElement>('[data-action="continue"]'),exit=document.querySelector<HTMLButtonElement>('[data-action="escape"]');
@@ -65,7 +65,7 @@ class VaultScene extends Phaser.Scene{
   const name=this.textLayer.text(x,y+(compact?39:56),c.revealed?c.title:`SEAL ${String.fromCharCode(65+i)}`,{fontFamily:'monospace',fontSize:compact?'12px':'13px',color:c.selected?'#ffe6a6':'#cdbfa9',align:'center',wordWrap:{width:compact?82:125}}).setOrigin(.5,0);
   view.add([glow,sprite]);
   if(c.selected){name.setAlpha(0);this.tweens.add({targets:name,alpha:1,y:name.y-3,delay:120,duration:180});this.time.delayedCall(100,()=>sprite.setFrame(3));this.tweens.add({targets:glow,alpha:.12,duration:700,yoyo:true,repeat:-1});this.rewardSpark(x,y,color);}
-  this.targets.push({kind:'chest',x,y:y+20,r:Math.max(62,Math.min(108,this.scale.width*.1)),title:c.title,subtitle:c.revealed?(c.selected?'당신이 연 상자':'NEAR MISS'):`${c.risk} · ${c.clue}`,source:c.source,view,sprite,glow});
+  this.targets.push({kind:'chest',x,y:y+20,r:Math.max(62,Math.min(108,this.scale.width*.1)),title:c.title,subtitle:c.revealed?(c.selected?'당신이 연 상자':'NEAR MISS'):`${c.personality?c.personality+' · ':''}${c.risk} · ${c.clue}`,source:c.source,view,sprite,glow});
  }
  private rewardSpark(x:number,y:number,color:number):void{
   for(let i=0;i<8;i++){const angle=i*Math.PI/4,particle=this.add.rectangle(Math.round(x+Math.cos(angle)*9),Math.round(y+Math.sin(angle)*5),3,3,color,.85).setDepth(25);this.tweens.add({targets:particle,x:Math.round(x+Math.cos(angle)*35),y:Math.round(y-18+Math.sin(angle)*24),alpha:0,duration:380,delay:i*18,onComplete:()=>particle.destroy()});}

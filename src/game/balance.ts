@@ -2,6 +2,7 @@ import type { ChestTier, ChestTierWeights } from './types/chest';
 import { emptyTierStats } from './types/chest';
 import type { RunPhase, SpecialVaultId, ShopOffer } from './types/specialVault';
 import type { WhisperId } from './types/whisper';
+import type { ChestPersonalityId } from './types/chestPersonality';
 export const BALANCE = {
   multipliers: [1, 1.25, 1.5, 2, 2.8, 4, 6, 9, 13, 20],
   danger: [2, 3, 5, 8, 12, 17, 23, 30, 38, 48],
@@ -33,7 +34,7 @@ export const CHARACTERS = [
 ] as const;
 export type ResultType = 'gold'|'multiplier'|'treasure'|'relic'|'curse'|'ruin'|'jackpot';
 export type ChestResult = { type: ResultType; rewardScale?: number; curseLoss?:number; amount?: number; name?: string; detail?: string };
-export type Chest = { tier:ChestTier; ruinChance:number; payout?:number; clue: string; clueSignal?:'fortune'|'mystic'|'danger'; result: ChestResult; hint?: string };
+export type Chest = { tier:ChestTier; ruinChance:number; payout?:number; clue: string; clueSignal?:'fortune'|'mystic'|'danger'; result: ChestResult; hint?: string; personality?:ChestPersonalityId };
 export type Settings = { sound: boolean; shake: boolean; reducedMotion: boolean };
 export type Stats = { runs: number; escapes: number; ruins: number; bestStreak: number; bestRun: number; jackpots: number; lifetimeGold: number; doubleWins: number; deepestFloorReached:number; chestTierStats:ChestTierWeights; specialVaultsDiscovered:number; specialVaultTypes:SpecialVaultId[] };
 export type SaveData = { version: number; soulCoins: number; jackpotGauge: number; upgrades: Record<string,number>; unlockedCharacters: string[]; achievements: string[]; statistics: Stats; settings: Settings; tutorialCompleted: boolean; introSeen: boolean };
