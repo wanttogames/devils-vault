@@ -4,6 +4,7 @@ import { ChestTierManager } from './ChestTierManager';
 import { SPECIAL_VAULTS, FINAL_CHEST, SPECIAL_BALANCE } from '../data/specialVaults';
 import type { ChestTier } from '../types/chest';
 import { addChestClues, clueAccuracy } from './ChestClueSystem';
+import { applyRiskThresholdClues } from './VaultRiskThresholdSystem';
 
 export function riskForRound(_round:number,_save:SaveData,run:RunState,tier:ChestTier='common'):number {
  const floor=FloorManager.definition(run);
@@ -65,7 +66,7 @@ export function createChests(save:SaveData,run:RunState,random=Math.random):Ches
  if(run.phase==='special'&&run.activeSpecial==='relic'){
   const pool=[...RELICS];for(let i=pool.length-1;i>0;i--){const j=Math.floor(random()*(i+1));[pool[i],pool[j]]=[pool[j]!,pool[i]!];}
   for(let i=0;i<3;i++){const relic=pool[i]!;chests[i]={tier:'rare',ruinChance:0,clue:relic.text,hint:relic.name,result:{type:'relic',name:relic.name,detail:relic.id}};}
- }else applyHints(chests,save,run,random);
+ }else {applyHints(chests,save,run,random);applyRiskThresholdClues(chests,Math.max(0,...chests.map(c=>c.ruinChance)),random);}
  return chests;
 }
 export function finalChest(save:SaveData,run:RunState,random=Math.random):Chest {

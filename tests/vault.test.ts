@@ -15,6 +15,7 @@ import { createChests, rewardWeights, riskForRound, finalChest, applyReward } fr
 import { clueAccuracy, clueForResult, signalForResult } from '../src/game/systems/ChestClueSystem';
 import { vaultRiskPresentation } from '../src/game/systems/VaultRiskPresentation';
 import { acceptWhisper, applyWhisperReveal, declineWhisper, rollWhisper, whisperChance } from '../src/game/systems/DevilWhisperSystem';
+import { applyRiskThresholdClues, escapeLockedByRisk, riskThresholdEvents } from '../src/game/systems/VaultRiskThresholdSystem';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -63,6 +64,19 @@ test('vault threat presentation follows actual maximum RUIN probability',()=>{
  const cases:[[number,string,string],...Array<[number,string,string]>]=[[0,'calm','안정'],[14.9,'calm','안정'],[15,'watch','경계'],[29.9,'watch','경계'],[30,'danger','위험'],[44.9,'danger','위험'],[45,'extreme','치명적'],[85,'extreme','치명적']];
  for(const [risk,level,label] of cases){const state=vaultRiskPresentation(risk);assert.equal(state.level,level);assert.equal(state.label,label);assert.ok(state.title.length>5);}
  assert.equal(vaultRiskPresentation(-5).risk,0);assert.equal(vaultRiskPresentation(500).risk,100);assert.equal(vaultRiskPresentation(Number.NaN).risk,0);
+});
+test('risk thresholds obscure clues at 30, deceive at 45 and seal escape at 60',()=>{
+ const base=()=>[
+  {tier:'common' as const,ruinChance:62,clue:'gold cue',clueSignal:'fortune' as const,result:{type:'gold' as const,amount:100}},
+  {tier:'common' as const,ruinChance:62,clue:'ruin cue',clueSignal:'danger' as const,result:{type:'ruin' as const}},
+  {tier:'common' as const,ruinChance:62,clue:'relic cue',clueSignal:'mystic' as const,result:{type:'relic' as const,name:'악마의 눈',detail:'eye'}}
+ ];
+ const low=base();assert.equal(applyRiskThresholdClues(low,29.9,()=>0),0);assert.equal(low[0]!.clue,'gold cue');
+ const fog=base();assert.equal(applyRiskThresholdClues(fog,30,()=>0),1);assert.ok(fog.some(c=>c.hint?.includes('핏빛 안개')));
+ const lie=base();assert.equal(applyRiskThresholdClues(lie,45,()=>0),2);assert.equal(lie.filter(c=>c.hint?.includes('핏빛 안개')).length,1);assert.ok(lie.some(c=>c.clue.includes('거짓')||c.hint?.includes('거짓')));
+ const protectedClues=base();protectedClues[0]!.hint='간파 · 금화';protectedClues[1]!.hint='운명의 실 · RUIN';protectedClues[2]!.hint='악마의 예언 · 유물';assert.equal(applyRiskThresholdClues(protectedClues,60,()=>0),0);assert.equal(protectedClues[0]!.hint,'간파 · 금화');
+ assert.equal(escapeLockedByRisk(59.9,false),false);assert.equal(escapeLockedByRisk(60,false),true);assert.equal(escapeLockedByRisk(85,true),false);
+ assert.deepEqual(riskThresholdEvents(29.9,false),[]);assert.equal(riskThresholdEvents(30,false).length,1);assert.equal(riskThresholdEvents(45,false).length,2);const critical=riskThresholdEvents(60,false);assert.equal(critical.length,3);assert.equal(critical[2]!.resolved,false);assert.equal(riskThresholdEvents(60,true)[2]!.resolved,true);
 });
 test('devil whispers respect eligibility, cooldown, costs and one-shot boons',()=>{
  const save=fresh(),run=createRun('gambler');assert.equal(rollWhisper(run,()=>0),null);run.completedRounds=1;assert.ok(whisperChance(run)>.2);
