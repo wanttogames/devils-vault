@@ -1,6 +1,7 @@
 import type { ChestTier, ChestTierWeights } from './types/chest';
 import { emptyTierStats } from './types/chest';
 import type { RunPhase, SpecialVaultId, ShopOffer } from './types/specialVault';
+import type { WhisperId } from './types/whisper';
 export const BALANCE = {
   multipliers: [1, 1.25, 1.5, 2, 2.8, 4, 6, 9, 13, 20],
   danger: [2, 3, 5, 8, 12, 17, 23, 30, 38, 48],
@@ -36,7 +37,7 @@ export type Chest = { tier:ChestTier; ruinChance:number; payout?:number; clue: s
 export type Settings = { sound: boolean; shake: boolean; reducedMotion: boolean };
 export type Stats = { runs: number; escapes: number; ruins: number; bestStreak: number; bestRun: number; jackpots: number; lifetimeGold: number; doubleWins: number; deepestFloorReached:number; chestTierStats:ChestTierWeights; specialVaultsDiscovered:number; specialVaultTypes:SpecialVaultId[] };
 export type SaveData = { version: number; soulCoins: number; jackpotGauge: number; upgrades: Record<string,number>; unlockedCharacters: string[]; achievements: string[]; statistics: Stats; settings: Settings; tutorialCompleted: boolean; introSeen: boolean };
-export type RunState = { gold: number; streak: number; round: number; chests: Chest[]; selected: number|null; revealed: boolean; relics: string[]; relicUsed: string[]; character: string; insuranceUsed: boolean; extraLifeUsed: boolean; doubleUsed: boolean; fever: boolean; treasureGoldBonus: number; pendingEscape: boolean; collected: string[]; currentFloor:number; currentFloorRound:number; deepestFloorReached:number; completedRounds:number; clearedFloors:number[]; phase:RunPhase; specialVaultsVisited:SpecialVaultId[]; specialVaultsDiscovered:SpecialVaultId[]; specialCount:number; specialCooldown:number; activeSpecial:SpecialVaultId|null; chestTierStats:ChestTierWeights; riskBonus:number; shopOffers:ShopOffer[]; finalOpened:boolean; bloodSurvived:boolean };
+export type RunState = { gold: number; streak: number; round: number; chests: Chest[]; selected: number|null; revealed: boolean; relics: string[]; relicUsed: string[]; character: string; insuranceUsed: boolean; extraLifeUsed: boolean; doubleUsed: boolean; fever: boolean; treasureGoldBonus: number; pendingEscape: boolean; collected: string[]; currentFloor:number; currentFloorRound:number; deepestFloorReached:number; completedRounds:number; clearedFloors:number[]; phase:RunPhase; specialVaultsVisited:SpecialVaultId[]; specialVaultsDiscovered:SpecialVaultId[]; specialCount:number; specialCooldown:number; activeSpecial:SpecialVaultId|null; chestTierStats:ChestTierWeights; riskBonus:number; shopOffers:ShopOffer[]; finalOpened:boolean; bloodSurvived:boolean; whisperCount:number; whisperCooldown:number; pendingWhisper:WhisperId|null; whisperRewardMultiplier:number; whisperReveal:boolean };
 export const DEFAULT_SAVE: SaveData = { version: 2, soulCoins: 0, jackpotGauge: 0, upgrades: {}, unlockedCharacters: ['gambler','seer','collector','immortal'], achievements: [], statistics: { runs:0, escapes:0, ruins:0, bestStreak:0, bestRun:0, jackpots:0, lifetimeGold:0, doubleWins:0,deepestFloorReached:0,chestTierStats:emptyTierStats(),specialVaultsDiscovered:0,specialVaultTypes:[] }, settings: { sound:true, shake:true, reducedMotion:false }, tutorialCompleted:false, introSeen:false };
 export function weightedRandom<T>(items: Array<{ value:T; weight:number }>, random=Math.random): T {
   const total = items.reduce((n,item)=>n+Math.max(0,item.weight),0);
@@ -51,5 +52,6 @@ export function rewardValue(result:ChestResult,save:SaveData,run:RunState):numbe
   const collector=run.character==='collector'&&result.type==='treasure'?1.25:1;
   const bonus=result.type==='treasure'?1+(save.upgrades.treasure??0)*.2:1;
   const hand=run.relics.includes('hand')&&!run.relicUsed.includes('hand')&&result.type==='gold'?3:1;
-  return Math.max(0,Math.round(raw*multiplier*collector*bonus*hand*(result.rewardScale??1)));
+  const whisper=['gold','treasure','jackpot'].includes(result.type)?Math.max(1,run.whisperRewardMultiplier??1):1;
+  return Math.max(0,Math.round(raw*multiplier*collector*bonus*hand*whisper*(result.rewardScale??1)));
 }

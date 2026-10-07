@@ -78,7 +78,7 @@ export function finalChest(save:SaveData,run:RunState,random=Math.random):Chest 
 export function grantRelic(run:RunState,id:string){if(!run.relics.includes(id))run.relics.push(id);run.relicUsed=run.relicUsed.filter(r=>r!==id);if(id==='insurance')run.insuranceUsed=false;}
 export function applyReward(result:ChestResult,save:SaveData,run:RunState):number {
  const before=run.gold;
- if(['gold','treasure','jackpot'].includes(result.type)){run.gold+=rewardValue(result,save,run)+run.treasureGoldBonus;run.treasureGoldBonus=0;run.collected.push(result.name??'금화');}
+ if(['gold','treasure','jackpot'].includes(result.type)){run.gold+=rewardValue(result,save,run)+run.treasureGoldBonus;run.treasureGoldBonus=0;run.collected.push(result.name??'금화');if(run.whisperRewardMultiplier>1)run.whisperRewardMultiplier=1;}
  if(result.type==='multiplier')run.gold=Math.round(Math.max(run.gold,100)*(result.amount??1));
  if(result.type==='curse'){if(result.detail?.includes('감소'))run.gold=Math.floor(run.gold*(1-(result.curseLoss??.2)));else if(result.detail?.includes('배율'))run.streak=Math.max(0,run.streak-1);else if(result.detail?.includes('위험도'))run.riskBonus+=5;run.collected.push(`저주: ${result.detail}`);}
  if(result.type==='relic'&&result.detail)grantRelic(run,result.detail);

@@ -14,6 +14,7 @@ import { ChestTierManager } from '../src/game/systems/ChestTierManager';
 import { createChests, rewardWeights, riskForRound, finalChest, applyReward } from '../src/game/systems/RewardManager';
 import { clueAccuracy, clueForResult, signalForResult } from '../src/game/systems/ChestClueSystem';
 import { vaultRiskPresentation } from '../src/game/systems/VaultRiskPresentation';
+import { acceptWhisper, applyWhisperReveal, declineWhisper, rollWhisper, whisperChance } from '../src/game/systems/DevilWhisperSystem';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -62,6 +63,13 @@ test('vault threat presentation follows actual maximum RUIN probability',()=>{
  const cases:[[number,string,string],...Array<[number,string,string]>]=[[0,'calm','안정'],[14.9,'calm','안정'],[15,'watch','경계'],[29.9,'watch','경계'],[30,'danger','위험'],[44.9,'danger','위험'],[45,'extreme','치명적'],[85,'extreme','치명적']];
  for(const [risk,level,label] of cases){const state=vaultRiskPresentation(risk);assert.equal(state.level,level);assert.equal(state.label,label);assert.ok(state.title.length>5);}
  assert.equal(vaultRiskPresentation(-5).risk,0);assert.equal(vaultRiskPresentation(500).risk,100);assert.equal(vaultRiskPresentation(Number.NaN).risk,0);
+});
+test('devil whispers respect eligibility, cooldown, costs and one-shot boons',()=>{
+ const save=fresh(),run=createRun('gambler');assert.equal(rollWhisper(run,()=>0),null);run.completedRounds=1;assert.ok(whisperChance(run)>.2);
+ const offered=rollWhisper(run,()=>0)!;assert.equal(offered.id,'blood-advance');assert.equal(run.whisperCount,1);assert.equal(run.whisperCooldown,3);run.gold=1000;const before=run.gold;const accepted=acceptWhisper(run);assert.ok(accepted.includes('피의 선금'));assert.ok(run.gold>before);assert.equal(run.riskBonus,6);assert.equal(run.pendingWhisper,null);
+ run.pendingWhisper='black-prophecy';acceptWhisper(run);assert.equal(run.riskBonus,10);run.chests=[{tier:'common',ruinChance:12,clue:'',result:{type:'gold',amount:100,name:'금화'}},{tier:'common',ruinChance:12,clue:'',result:{type:'ruin',name:'RUIN'}},{tier:'common',ruinChance:12,clue:'',result:{type:'relic',name:'악마의 눈'}}];assert.equal(applyWhisperReveal(run,()=>.4),true);assert.ok(run.chests.some(c=>c.hint?.startsWith('악마의 예언 · ')));assert.equal(run.whisperReveal,false);
+ run.pendingWhisper='greed-blessing';acceptWhisper(run);assert.equal(run.whisperRewardMultiplier,2);const gain=applyReward({type:'gold',amount:100},save,run);assert.ok(gain>=200);assert.equal(run.whisperRewardMultiplier,1);
+ run.pendingWhisper='blood-advance';declineWhisper(run);assert.equal(run.pendingWhisper,null);
 });
 test('Relic room offers three distinct visible relics; shop charges run gold once',()=>{
  const save=fresh(),run=createRun('gambler');run.phase='special';run.activeSpecial='relic';const cs=createChests(save,run,seeded());assert.equal(new Set(cs.map(c=>c.result.detail)).size,3);for(const c of cs){assert.equal(c.result.type,'relic');assert.equal(c.hint,c.result.name);assert.equal(c.ruinChance,0);}
