@@ -30,7 +30,7 @@ export function rollChestPersonality(random=Math.random):ChestPersonalityId{
  return CHEST_PERSONALITIES[CHEST_PERSONALITIES.length-1]!.id;
 }
 
-export function personalityRiskModifier(id?:ChestPersonalityId):number{return chestPersonality(id)?.riskModifier??0;}
+export function personalityRiskModifier(id?:ChestPersonalityId,room:SpecialVaultId|null=null):number{const value=chestPersonality(id)?.riskModifier??0;return room==='blood'?Math.max(0,value):value;}
 
 export function personalityRewardMultiplier(id?:ChestPersonalityId,room:SpecialVaultId|null=null):number{
  const value=chestPersonality(id)?.rewardMultiplier??1;

@@ -11,8 +11,8 @@ import type { ChestPersonalityId } from '../types/chestPersonality';
 export function riskForRound(_round:number,_save:SaveData,run:RunState,tier:ChestTier='common',personality?:ChestPersonalityId):number {
  const floor=FloorManager.definition(run);
  const base=BALANCE.danger[Math.min(run.currentFloorRound-1,BALANCE.danger.length-1)]!;
- const risk=base+floor.riskModifier+ChestTierManager.definition(tier).riskModifier+run.riskBonus+personalityRiskModifier(personality)+(run.relics.includes('contract')?10:0)-(run.character==='gambler'?2:0);
  const room=run.activeSpecial&&run.phase==='special'?SPECIAL_VAULTS.find(v=>v.id===run.activeSpecial):null;
+ const risk=base+floor.riskModifier+ChestTierManager.definition(tier).riskModifier+run.riskBonus+personalityRiskModifier(personality,run.phase==='special'?run.activeSpecial:null)+(run.relics.includes('contract')?10:0)-(run.character==='gambler'?2:0);
  return Math.min(85,Math.max(.5,risk)*(room?.riskMultiplier??1));
 }
 export function rewardWeights(save:SaveData,run:RunState,tier:ChestTier,personality?:ChestPersonalityId):Record<ResultType,number> {
@@ -55,8 +55,9 @@ export function applyHints(chests:Chest[],save:SaveData,run:RunState,random=Math
 }
 export function createChests(save:SaveData,run:RunState,random=Math.random):Chest[]{
  const floor=FloorManager.definition(run);
+ const curatedPersonality=run.phase==='special'&&(run.activeSpecial==='cursed'||run.activeSpecial==='relic');
  const chests:Chest[]=Array.from({length:3},()=>{
-  const personality=rollChestPersonality(random);
+  const personality=curatedPersonality?undefined:rollChestPersonality(random);
   const tier=run.phase==='special'&&run.activeSpecial==='gold'?weightedRandom<ChestTier>([{value:'rare',weight:70},{value:'epic',weight:25},{value:'legendary',weight:5}],random):run.phase==='special'&&run.activeSpecial==='blood'?weightedRandom<ChestTier>([{value:'epic',weight:55},{value:'legendary',weight:35},{value:'mythic',weight:10}],random):ChestTierManager.roll(floor.chestTierWeights,random);
   const weights=rewardWeights(save,run,tier,personality);
   const type=weightedRandom(Object.entries(weights).map(([value,weight])=>({value:value as ResultType,weight})),random);
