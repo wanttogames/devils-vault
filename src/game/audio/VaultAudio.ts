@@ -1,7 +1,7 @@
 import { soundProfileForRisk, type VaultSoundRiskLevel } from './AudioProfile';
 
 export type VaultAudioScene='menu'|'vault'|'whisper'|'result';
-export type VaultAudioCue='ui'|'focus'|'chest-open'|'door'|'gold'|'treasure'|'multiplier'|'relic'|'curse'|'ruin'|'jackpot'|'whisper'|'contract'|'reject'|'escape'|'blocked'|'madness'|'reward';
+export type VaultAudioCue='ui'|'focus'|'chest-open'|'door'|'gold'|'treasure'|'multiplier'|'relic'|'curse'|'ruin'|'jackpot'|'whisper'|'contract'|'reject'|'escape'|'blocked'|'madness'|'near-death'|'near-jackpot'|'near-perfect'|'reward';
 
 export class VaultAudio{
  private context:AudioContext|null=null;
@@ -60,6 +60,9 @@ export class VaultAudio{
    case'escape':this.chime([262,330,392,523],.045,.11);break;
    case'blocked':this.osc(58,.16,'square',.045);this.osc(46,.22,'sine',.05,.07);break;
    case'madness':this.noiseBurst(.42,.075,330);this.slide(118,41,.72,'sawtooth',.055);this.osc(31,.85,'sine',.08);window.setTimeout(()=>this.chime([155,147,139],.025,.07),130);break;
+   case'near-death':this.noiseBurst(.16,.052,260);this.osc(62,.14,'sine',.06);window.setTimeout(()=>this.osc(49,.2,'sine',.055),90);break;
+   case'near-jackpot':this.chime([392,523,659],.032,.055);window.setTimeout(()=>this.slide(720,280,.24,'triangle',.024),155);break;
+   case'near-perfect':this.noiseBurst(.12,.035,1400);this.chime([330,494,659,988],.045,.06);window.setTimeout(()=>this.osc(55,.28,'sine',.06),85);break;
    case'reward':this.chime([330,440],.025,.08);break;
   }
  }
