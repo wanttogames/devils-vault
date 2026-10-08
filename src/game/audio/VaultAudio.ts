@@ -1,7 +1,7 @@
 import { soundProfileForRisk, type VaultSoundRiskLevel } from './AudioProfile';
 
 export type VaultAudioScene='menu'|'vault'|'whisper'|'result';
-export type VaultAudioCue='ui'|'focus'|'chest-open'|'door'|'gold'|'treasure'|'multiplier'|'relic'|'curse'|'ruin'|'jackpot'|'whisper'|'contract'|'reject'|'escape'|'blocked'|'reward';
+export type VaultAudioCue='ui'|'focus'|'chest-open'|'door'|'gold'|'treasure'|'multiplier'|'relic'|'curse'|'ruin'|'jackpot'|'whisper'|'contract'|'reject'|'escape'|'blocked'|'madness'|'reward';
 
 export class VaultAudio{
  private context:AudioContext|null=null;
@@ -35,7 +35,7 @@ export class VaultAudio{
  setScene(scene:VaultAudioScene,risk=0):void{
   const previous=this.lastLevel;this.scene=scene;this.risk=Number.isFinite(risk)?Math.max(0,Math.min(100,risk)):0;
   const profile=soundProfileForRisk(this.risk);this.lastLevel=profile.level;
-  if(this.unlocked&&this.enabled){this.ensureAmbience();this.applyMix();if(scene==='vault'&&this.rank(profile.level)>this.rank(previous))this.cue('blocked');}
+  if(this.unlocked&&this.enabled){this.ensureAmbience();this.applyMix();if(scene==='vault'&&this.rank(profile.level)>this.rank(previous))this.cue(profile.level==='madness'?'madness':'blocked');}
  }
 
  tone(freq:number,duration:number):void{this.osc(freq,Math.max(.04,duration),'sine',.035);}
@@ -59,6 +59,7 @@ export class VaultAudio{
    case'reject':this.slide(240,150,.18,'triangle',.026);break;
    case'escape':this.chime([262,330,392,523],.045,.11);break;
    case'blocked':this.osc(58,.16,'square',.045);this.osc(46,.22,'sine',.05,.07);break;
+   case'madness':this.noiseBurst(.42,.075,330);this.slide(118,41,.72,'sawtooth',.055);this.osc(31,.85,'sine',.08);window.setTimeout(()=>this.chime([155,147,139],.025,.07),130);break;
    case'reward':this.chime([330,440],.025,.08);break;
   }
  }
@@ -122,5 +123,5 @@ export class VaultAudio{
   const source=ctx.createBufferSource(),filter=ctx.createBiquadFilter(),gain=ctx.createGain();source.buffer=buffer;filter.type='lowpass';filter.frequency.value=frequency;gain.gain.value=gainValue;source.connect(filter).connect(gain).connect(this.effects);source.start();
  }
 
- private rank(level:VaultSoundRiskLevel):number{return['quiet','watch','danger','severe','critical'].indexOf(level);}
+ private rank(level:VaultSoundRiskLevel):number{return['quiet','watch','danger','severe','critical','madness'].indexOf(level);}
 }
