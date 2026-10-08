@@ -20,6 +20,7 @@ import { CHEST_PERSONALITIES, applyPersonalityWeights, personalityClueAccuracy, 
 import { soundProfileForRisk } from '../src/game/audio/AudioProfile';
 import { isMadnessRisk, madnessRewardMultiplier, madnessRisk, madnessTier } from '../src/game/systems/VaultMadnessSystem';
 import { FLOOR_RULES, applyFloorWeightRules, floorClueAccuracy, floorForcesChoice, floorHidesRisk, floorRewardMultiplier, floorRule } from '../src/game/systems/FloorRuleSystem';
+import { nearMissAnalysis, nearMissChestClass } from '../src/game/systems/NearMissSystem';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -72,6 +73,16 @@ test('chest personalities change risk, rewards, odds and clue reliability',()=>{
  const base={gold:56,multiplier:18,treasure:11,relic:7,curse:6,ruin:2,jackpot:.5};const blood={...base};applyPersonalityWeights(blood,'blood');assert.ok(blood.jackpot>base.jackpot);assert.ok(blood.curse>base.curse);
  const greed={...base};applyPersonalityWeights(greed,'greedy');assert.ok(greed.treasure>base.treasure);assert.ok(greed.jackpot>base.jackpot);
  const save=fresh(),run=createRun('gambler'),chests=createChests(save,run,seeded(22));assert.ok(chests.every(c=>c.personality));for(const c of chests)assert.equal(c.ruinChance,riskForRound(run.round,save,run,c.tier,c.personality));
+});
+test('near miss analysis prioritizes survival, jackpot tension and perfect reads',()=>{
+ const chest=(type:'gold'|'ruin'|'jackpot'|'treasure')=>({tier:'common' as const,ruinChance:25,clue:'test',result:{type,amount:type==='gold'||type==='jackpot'||type==='treasure'?100:undefined}});
+ let result=nearMissAnalysis([chest('gold'),chest('ruin'),chest('ruin')],0);assert.equal(result?.kind,'double-ruin');assert.equal(result?.ruinAvoided,2);assert.equal(result?.cue,'near-death');
+ result=nearMissAnalysis([chest('jackpot'),chest('ruin'),chest('gold')],0);assert.equal(result?.kind,'perfect');assert.equal(result?.cue,'near-perfect');
+ result=nearMissAnalysis([chest('gold'),chest('ruin'),chest('jackpot')],0);assert.equal(result?.kind,'crossroads');assert.equal(result?.jackpotsMissed,1);
+ result=nearMissAnalysis([chest('gold'),chest('treasure'),chest('jackpot')],0);assert.equal(result?.kind,'jackpot-missed');assert.equal(result?.cue,'near-jackpot');
+ assert.equal(nearMissAnalysis([chest('gold'),chest('treasure'),chest('gold')],0),null);
+ assert.equal(nearMissAnalysis([chest('gold')],0),null);
+ assert.equal(nearMissChestClass(chest('ruin'),false,true),'near-miss-ruin');assert.equal(nearMissChestClass(chest('jackpot'),false,true),'near-miss-jackpot');assert.equal(nearMissChestClass(chest('ruin'),true,true),'');
 });
 test('each floor has a distinct gameplay rule without leaking into special vaults',()=>{
  assert.equal(FLOOR_RULES.length,5);assert.equal(new Set(FLOOR_RULES.map(r=>r.id)).size,5);
