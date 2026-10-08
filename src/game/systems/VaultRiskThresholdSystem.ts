@@ -2,7 +2,7 @@ import type { Chest } from '../balance';
 import { signalForResult, type ClueSignal } from './ChestClueSystem';
 
 export type RiskThresholdEvent={
- level:30|45|60;
+ level:30|45|60|75;
  code:string;
  name:string;
  description:string;
@@ -55,5 +55,6 @@ export function riskThresholdEvents(risk:number,revealed:boolean):RiskThresholdE
  if(risk>=30)events.push({level:30,code:'30',name:'핏빛 안개',description:'상자 단서 1개가 소실됩니다'});
  if(risk>=45)events.push({level:45,code:'45',name:'거짓 속삭임',description:'별도 단서 1개가 거짓 징조로 오염됩니다'});
  if(risk>=60)events.push({level:60,code:'60',name:'출구 봉쇄',description:revealed?'상자를 열어 탈출문이 다시 열렸습니다':'상자 하나를 열기 전 탈출할 수 없습니다',resolved:revealed});
+ if(risk>=75)events.push({level:75,code:'75',name:'광기 상태',description:'모든 상자 Rare+ · 금전 보상 ×1.5 · RUIN +5%p'});
  return events;
 }
