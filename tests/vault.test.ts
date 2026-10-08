@@ -76,7 +76,7 @@ test('chest personalities change risk, rewards, odds and clue reliability',()=>{
 test('each floor has a distinct gameplay rule without leaking into special vaults',()=>{
  assert.equal(FLOOR_RULES.length,5);assert.equal(new Set(FLOOR_RULES.map(r=>r.id)).size,5);
  for(let floor=1;floor<=5;floor++){const rule=floorRule(floor);assert.equal(rule.floor,floor);assert.ok(rule.name.length>2);assert.ok(rule.short.length>3);}
- assert.equal(floorClueAccuracy(1,.7),.8);assert.equal(floorClueAccuracy(4,.7),.6);assert.equal(floorClueAccuracy(2,.7),.7);assert.equal(floorClueAccuracy(1,.7,'special'),.7);
+ assert.ok(Math.abs(floorClueAccuracy(1,.7)-.8)<1e-10);assert.ok(Math.abs(floorClueAccuracy(4,.7)-.6)<1e-10);assert.equal(floorClueAccuracy(2,.7),.7);assert.equal(floorClueAccuracy(1,.7,'special'),.7);
  assert.equal(floorRewardMultiplier(2),1.15);assert.equal(floorRewardMultiplier(5),1.25);assert.equal(floorRewardMultiplier(3),1);assert.equal(floorRewardMultiplier(5,'special'),1);
  const base={gold:56,multiplier:18,treasure:11,relic:7,curse:6,ruin:2,jackpot:.5};const blood={...base};applyFloorWeightRules(blood,3);assert.ok(blood.jackpot>base.jackpot);assert.ok(blood.curse>base.curse);assert.ok(blood.gold<base.gold);
  const untouched={...base};applyFloorWeightRules(untouched,3,'special');assert.deepEqual(untouched,base);
