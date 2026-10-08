@@ -18,6 +18,7 @@ import { acceptWhisper, applyWhisperReveal, declineWhisper, rollWhisper, whisper
 import { applyRiskThresholdClues, escapeLockedByRisk, riskThresholdEvents } from '../src/game/systems/VaultRiskThresholdSystem';
 import { CHEST_PERSONALITIES, applyPersonalityWeights, personalityClueAccuracy, personalityRewardMultiplier, personalityRiskModifier, rollChestPersonality } from '../src/game/systems/ChestPersonalitySystem';
 import { soundProfileForRisk } from '../src/game/audio/AudioProfile';
+import { isMadnessRisk, madnessRewardMultiplier, madnessRisk, madnessTier } from '../src/game/systems/VaultMadnessSystem';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -71,14 +72,23 @@ test('chest personalities change risk, rewards, odds and clue reliability',()=>{
  const greed={...base};applyPersonalityWeights(greed,'greedy');assert.ok(greed.treasure>base.treasure);assert.ok(greed.jackpot>base.jackpot);
  const save=fresh(),run=createRun('gambler'),chests=createChests(save,run,seeded(22));assert.ok(chests.every(c=>c.personality));for(const c of chests)assert.equal(c.ruinChance,riskForRound(run.round,save,run,c.tier,c.personality));
 });
+test('75% madness upgrades chest floor, rewards and final RUIN pressure',()=>{
+ assert.equal(isMadnessRisk(74.9),false);assert.equal(isMadnessRisk(75),true);
+ assert.equal(madnessTier('common'),'rare');assert.equal(madnessTier('uncommon'),'rare');assert.equal(madnessTier('epic'),'epic');
+ assert.equal(madnessRewardMultiplier(false),1);assert.equal(madnessRewardMultiplier(true),1.5);
+ assert.equal(madnessRisk(74),79);assert.equal(madnessRisk(88),90);
+ const save=fresh(),run=createRun('collector');run.currentFloor=5;run.currentFloorRound=4;run.riskBonus=60;
+ const chests=createChests(save,run,seeded(407));assert.ok(chests.every(c=>TIER_IDS.indexOf(c.tier)>=2));assert.ok(chests.every(c=>c.ruinChance>=75&&c.ruinChance<=90));
+ for(const c of chests)if(['gold','treasure','jackpot'].includes(c.result.type))assert.ok((c.result.rewardScale??1)>=1.5);
+});
 test('sound profile intensifies monotonically across RUIN thresholds',()=>{
- const risks=[0,15,30,45,60,85],profiles=risks.map(soundProfileForRisk);
- assert.deepEqual(profiles.map(p=>p.level),['quiet','watch','danger','severe','critical','critical']);
+ const risks=[0,15,30,45,60,75,85],profiles=risks.map(soundProfileForRisk);
+ assert.deepEqual(profiles.map(p=>p.level),['quiet','watch','danger','severe','critical','madness','madness']);
  for(let i=1;i<profiles.length;i++){assert.ok(profiles[i]!.droneGain>=profiles[i-1]!.droneGain);assert.ok(profiles[i]!.noiseGain>=profiles[i-1]!.noiseGain);assert.ok(profiles[i]!.heartbeatMs<=profiles[i-1]!.heartbeatMs);}
  assert.equal(soundProfileForRisk(Number.NaN).risk,0);assert.equal(soundProfileForRisk(500).risk,100);
 });
 test('vault threat presentation follows actual maximum RUIN probability',()=>{
- const cases:[[number,string,string],...Array<[number,string,string]>]=[[0,'calm','안정'],[14.9,'calm','안정'],[15,'watch','경계'],[29.9,'watch','경계'],[30,'danger','위험'],[44.9,'danger','위험'],[45,'extreme','치명적'],[85,'extreme','치명적']];
+ const cases:[[number,string,string],...Array<[number,string,string]>]=[[0,'calm','안정'],[14.9,'calm','안정'],[15,'watch','경계'],[29.9,'watch','경계'],[30,'danger','위험'],[44.9,'danger','위험'],[45,'extreme','치명적'],[74.9,'extreme','치명적'],[75,'madness','광기'],[85,'madness','광기']];
  for(const [risk,level,label] of cases){const state=vaultRiskPresentation(risk);assert.equal(state.level,level);assert.equal(state.label,label);assert.ok(state.title.length>5);}
  assert.equal(vaultRiskPresentation(-5).risk,0);assert.equal(vaultRiskPresentation(500).risk,100);assert.equal(vaultRiskPresentation(Number.NaN).risk,0);
 });
@@ -93,7 +103,7 @@ test('risk thresholds obscure clues at 30, deceive at 45 and seal escape at 60',
  const lie=base();assert.equal(applyRiskThresholdClues(lie,45,()=>0),2);assert.equal(lie.filter(c=>c.hint?.includes('핏빛 안개')).length,1);assert.ok(lie.some(c=>c.clue.includes('거짓')||c.hint?.includes('거짓')));
  const protectedClues=base();protectedClues[0]!.hint='간파 · 금화';protectedClues[1]!.hint='운명의 실 · RUIN';protectedClues[2]!.hint='악마의 예언 · 유물';assert.equal(applyRiskThresholdClues(protectedClues,60,()=>0),0);assert.equal(protectedClues[0]!.hint,'간파 · 금화');
  assert.equal(escapeLockedByRisk(59.9,false),false);assert.equal(escapeLockedByRisk(60,false),true);assert.equal(escapeLockedByRisk(85,true),false);
- assert.deepEqual(riskThresholdEvents(29.9,false),[]);assert.equal(riskThresholdEvents(30,false).length,1);assert.equal(riskThresholdEvents(45,false).length,2);const critical=riskThresholdEvents(60,false);assert.equal(critical.length,3);assert.equal(critical[2]!.resolved,false);assert.equal(riskThresholdEvents(60,true)[2]!.resolved,true);
+ assert.deepEqual(riskThresholdEvents(29.9,false),[]);assert.equal(riskThresholdEvents(30,false).length,1);assert.equal(riskThresholdEvents(45,false).length,2);const critical=riskThresholdEvents(60,false);assert.equal(critical.length,3);assert.equal(critical[2]!.resolved,false);assert.equal(riskThresholdEvents(60,true)[2]!.resolved,true);const madnessEvents=riskThresholdEvents(75,false);assert.equal(madnessEvents.length,4);assert.equal(madnessEvents[3]!.name,'광기 상태');
 });
 test('devil whispers respect eligibility, cooldown, costs and one-shot boons',()=>{
  const save=fresh(),run=createRun('gambler');assert.equal(rollWhisper(run,()=>0),null);run.completedRounds=1;assert.ok(whisperChance(run)>.2);
