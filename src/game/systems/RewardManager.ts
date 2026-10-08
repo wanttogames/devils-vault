@@ -8,6 +8,7 @@ import { applyRiskThresholdClues } from './VaultRiskThresholdSystem';
 import { applyPersonalityWeights, personalityClueAccuracy, personalityRewardMultiplier, personalityRiskModifier, rollChestPersonality } from './ChestPersonalitySystem';
 import type { ChestPersonalityId } from '../types/chestPersonality';
 import { isMadnessRisk, madnessRewardMultiplier, madnessRisk, madnessTier } from './VaultMadnessSystem';
+import { applyFloorWeightRules, floorClueAccuracy, floorRewardMultiplier } from './FloorRuleSystem';
 
 export function riskForRound(_round:number,_save:SaveData,run:RunState,tier:ChestTier='common',personality?:ChestPersonalityId):number {
  const floor=FloorManager.definition(run);
@@ -26,6 +27,7 @@ export function rewardWeights(save:SaveData,run:RunState,tier:ChestTier,personal
  if(run.fever){w.jackpot+=2.5;w.treasure+=6;}
  for(const key of Object.keys(def.weights) as ResultType[])w[key]*=def.weights[key]!;
  applyPersonalityWeights(w,personality);
+ applyFloorWeightRules(w,run.currentFloor,run.phase);
  if(run.phase==='special'&&run.activeSpecial==='gold'){w.curse=0;w.gold*=2;}
  if(run.phase==='special'&&run.activeSpecial==='blood'){w.jackpot*=2;w.curse*=2;}
  const risk=riskOverride??riskForRound(run.round,save,run,tier,personality);
@@ -36,7 +38,7 @@ export function rewardWeights(save:SaveData,run:RunState,tier:ChestTier,personal
 function resultFor(type:ResultType,run:RunState,tier:ChestTier,random:()=>number,personality?:ChestPersonalityId,rewardBonus=1):ChestResult {
  const pick=<T>(xs:readonly T[])=>xs[Math.floor(random()*xs.length)]!;
  const floor=FloorManager.definition(run),room=run.phase==='special'?SPECIAL_VAULTS.find(v=>v.id===run.activeSpecial):null;
- const rewardScale=floor.rewardMultiplier*ChestTierManager.definition(tier).rewardMultiplier*(room?.rewardMultiplier??1)*personalityRewardMultiplier(personality,run.phase==='special'?run.activeSpecial:null)*rewardBonus;
+ const rewardScale=floor.rewardMultiplier*ChestTierManager.definition(tier).rewardMultiplier*(room?.rewardMultiplier??1)*personalityRewardMultiplier(personality,run.phase==='special'?run.activeSpecial:null)*floorRewardMultiplier(run.currentFloor,run.phase)*rewardBonus;
  const base={type,rewardScale};
  if(type==='gold')return {...base,amount:pick(BALANCE.goldValues),name:'금화'};
  if(type==='multiplier')return {...base,amount:(pick([1.25,1.5,2,3])+(tier==='epic'?.5:tier==='legendary'?1:tier==='mythic'?2:0))*(room?.rewardMultiplier??1),name:'배율 상승'};
@@ -48,7 +50,7 @@ function resultFor(type:ResultType,run:RunState,tier:ChestTier,random:()=>number
 }
 export function applyHints(chests:Chest[],save:SaveData,run:RunState,random=Math.random){
  const insight=save.upgrades.insight??0;
- const accuracy=clueAccuracy(run.character,insight);
+ const accuracy=floorClueAccuracy(run.currentFloor,clueAccuracy(run.character,insight),run.phase);
  for(const chest of chests)addChestClues([chest],random,personalityClueAccuracy(chest.personality,accuracy));
  if(run.character==='seer')for(const c of chests)c.hint=`예언자의 감응 · ${c.clue}`;
  if(run.relics.includes('eye')&&!run.relicUsed.includes('eye')){const c=chests[Math.floor(random()*chests.length)]!;c.hint=`간파 · ${c.result.name??c.result.type.toUpperCase()}`;run.relicUsed.push('eye');}
