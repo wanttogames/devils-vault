@@ -19,6 +19,7 @@ import { applyRiskThresholdClues, escapeLockedByRisk, riskThresholdEvents } from
 import { CHEST_PERSONALITIES, applyPersonalityWeights, personalityClueAccuracy, personalityRewardMultiplier, personalityRiskModifier, rollChestPersonality } from '../src/game/systems/ChestPersonalitySystem';
 import { soundProfileForRisk } from '../src/game/audio/AudioProfile';
 import { isMadnessRisk, madnessRewardMultiplier, madnessRisk, madnessTier } from '../src/game/systems/VaultMadnessSystem';
+import { FLOOR_RULES, applyFloorWeightRules, floorClueAccuracy, floorForcesChoice, floorHidesRisk, floorRewardMultiplier, floorRule } from '../src/game/systems/FloorRuleSystem';
 const fresh=()=>structuredClone(DEFAULT_SAVE);
 const seeded=(seed=12345)=>()=>{seed=(Math.imul(seed,1664525)+1013904223)>>>0;return seed/4294967296;};
 test('B1–B5: 19 ordinary rounds, independent streak, explicit boundaries, bonus once',()=>{
@@ -71,6 +72,16 @@ test('chest personalities change risk, rewards, odds and clue reliability',()=>{
  const base={gold:56,multiplier:18,treasure:11,relic:7,curse:6,ruin:2,jackpot:.5};const blood={...base};applyPersonalityWeights(blood,'blood');assert.ok(blood.jackpot>base.jackpot);assert.ok(blood.curse>base.curse);
  const greed={...base};applyPersonalityWeights(greed,'greedy');assert.ok(greed.treasure>base.treasure);assert.ok(greed.jackpot>base.jackpot);
  const save=fresh(),run=createRun('gambler'),chests=createChests(save,run,seeded(22));assert.ok(chests.every(c=>c.personality));for(const c of chests)assert.equal(c.ruinChance,riskForRound(run.round,save,run,c.tier,c.personality));
+});
+test('each floor has a distinct gameplay rule without leaking into special vaults',()=>{
+ assert.equal(FLOOR_RULES.length,5);assert.equal(new Set(FLOOR_RULES.map(r=>r.id)).size,5);
+ for(let floor=1;floor<=5;floor++){const rule=floorRule(floor);assert.equal(rule.floor,floor);assert.ok(rule.name.length>2);assert.ok(rule.short.length>3);}
+ assert.equal(floorClueAccuracy(1,.7),.8);assert.equal(floorClueAccuracy(4,.7),.6);assert.equal(floorClueAccuracy(2,.7),.7);assert.equal(floorClueAccuracy(1,.7,'special'),.7);
+ assert.equal(floorRewardMultiplier(2),1.15);assert.equal(floorRewardMultiplier(5),1.25);assert.equal(floorRewardMultiplier(3),1);assert.equal(floorRewardMultiplier(5,'special'),1);
+ const base={gold:56,multiplier:18,treasure:11,relic:7,curse:6,ruin:2,jackpot:.5};const blood={...base};applyFloorWeightRules(blood,3);assert.ok(blood.jackpot>base.jackpot);assert.ok(blood.curse>base.curse);assert.ok(blood.gold<base.gold);
+ const untouched={...base};applyFloorWeightRules(untouched,3,'special');assert.deepEqual(untouched,base);
+ assert.equal(floorHidesRisk(4),true);assert.equal(floorHidesRisk(3),false);assert.equal(floorHidesRisk(4,'special'),false);
+ assert.equal(floorForcesChoice(5,false),true);assert.equal(floorForcesChoice(5,true),false);assert.equal(floorForcesChoice(4,false),false);assert.equal(floorForcesChoice(5,false,'special'),false);
 });
 test('75% madness upgrades chest floor, rewards and final RUIN pressure',()=>{
  assert.equal(isMadnessRisk(74.9),false);assert.equal(isMadnessRisk(75),true);
