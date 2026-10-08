@@ -456,3 +456,24 @@ html[data-floor] .room-rune .sigil-art { stroke: var(--floor-glow); }
 
 /* Chest personalities */
 .chest-personality{display:grid;gap:2px;justify-items:center;min-height:30px;margin:5px 5px 0;padding:5px 4px 4px;border-block:1px solid color-mix(in srgb,var(--personality-color) 38%,transparent);background:color-mix(in srgb,var(--personality-color) 7%,transparent);position:relative;z-index:2}.chest-personality b{color:var(--personality-color);font:700 8px/1.2 monospace;letter-spacing:.04em}.chest-personality i{color:#8f887c;font:normal 7px/1.25 sans-serif;white-space:nowrap}.chest.personality-greedy .chest-visual{filter:drop-shadow(0 0 8px #d3a14235)}.chest.personality-coward .chest-visual{opacity:.92}.chest.personality-liar .chest-personality{background:linear-gradient(90deg,transparent,color-mix(in srgb,var(--personality-color) 14%,transparent),transparent)}.chest.personality-blood .chest-visual{filter:drop-shadow(0 0 9px #c6433e45)}.chest.personality-blood .chest-personality b{animation:personality-blood-pulse 1.8s ease-in-out infinite}@keyframes personality-blood-pulse{50%{text-shadow:0 0 9px #d84b43aa}}@media(max-width:760px){.chest-personality{min-height:27px;margin-inline:2px;padding-inline:2px}.chest-personality b{font-size:7px}.chest-personality i{font-size:6px;letter-spacing:-.02em}}@media(prefers-reduced-motion:reduce){.chest.personality-blood .chest-personality b{animation:none}}
+
+
+/* 75% MADNESS state */
+.madness-banner{display:flex;align-items:center;gap:12px;margin:10px 0 14px;padding:10px 14px;border:1px solid #ff3c2f99;background:linear-gradient(90deg,#5b0e0ddb,#2c0909c9,#5b0e0ddb);box-shadow:inset 0 0 22px #ff2f2228,0 0 20px #8d151444;color:#f6a092;animation:madness-banner-pulse .8s ease-in-out infinite alternate}
+.madness-banner b{font:700 11px monospace;letter-spacing:.18em;color:#ff5545;text-shadow:0 0 10px #ff332faa}
+.madness-banner span{font-size:9px;letter-spacing:.04em}
+.risk-madness .hud{border-color:#ff4438b5;background:linear-gradient(115deg,#701714e3,#190a0ae0);box-shadow:inset 0 0 38px #e81d162e,0 0 34px #9c14133b}
+.risk-madness .game-heading h2{color:#ff7968;text-shadow:0 0 18px #f328236e}
+.risk-madness .risk-text,.risk-madness .risk-state{color:#ff493d;text-shadow:0 0 8px #ff302b88}
+.risk-madness .risk-track i{background:#ff241b;box-shadow:0 0 16px #ff241bdd}
+.risk-madness .room-rune{color:#f52c27a8;filter:drop-shadow(0 0 18px #ee221f88)}
+.risk-madness .room-arch{box-shadow:inset 0 0 120px #e91f174f,0 0 30px #b0161233}
+.risk-event-75{border-color:#ff3f3399;background:linear-gradient(100deg,#58100fd4,#260909e8);box-shadow:inset 0 0 22px #f0201a2c}
+.risk-event-75 b,.risk-event-75 i{color:#ff6557}
+.risk-event-75 b{box-shadow:0 0 10px #ff342755}
+.risk-madness .escape-sealed{animation:sealed-exit-pulse .72s ease-in-out infinite}
+.risk-madness .chest{box-shadow:0 0 0 1px #d92c2335,0 0 18px #a3171128}
+.risk-madness .chest-risk{color:#e66b5d}
+@keyframes madness-banner-pulse{from{filter:saturate(.88);transform:translateX(-1px)}to{filter:saturate(1.2);transform:translateX(1px);box-shadow:inset 0 0 30px #ff2f2235,0 0 28px #a51a184f}}
+@media(max-width:700px){.madness-banner{align-items:flex-start;flex-direction:column;gap:5px}.madness-banner span{line-height:1.45}}
+@media(prefers-reduced-motion:reduce){.madness-banner,.risk-madness .escape-sealed{animation:none}}
