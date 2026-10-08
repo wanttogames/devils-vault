@@ -51,11 +51,11 @@ class VaultScene extends Phaser.Scene{
   this.events.once(Phaser.Scenes.Events.SHUTDOWN,()=>{this.scale.off(Phaser.Scale.Events.RESIZE,resize);if(scene===this)scene=null;});
  }
  private addRiskAtmosphere(w:number,h:number):void{
-  const risk=Phaser.Math.Clamp(this.room.risk,0,100);if(risk<15)return;const level=this.room.riskLevel,color=level==='watch'?0xa85a32:level==='danger'?0xb4372f:0xd12626,strength=Phaser.Math.Clamp((risk-10)/70,.08,.82);
-  const veil=this.add.rectangle(w/2,h/2,w,h,color,.025+strength*.07).setDepth(6),frame=this.add.rectangle(w/2,h/2,Math.max(40,w-10),Math.max(40,h-10)).setStrokeStyle(level==='extreme'?3:2,color,.12+strength*.32).setDepth(28);
+  const risk=Phaser.Math.Clamp(this.room.risk,0,100);if(risk<15)return;const level=this.room.riskLevel,color=level==='watch'?0xa85a32:level==='danger'?0xb4372f:level==='madness'?0xff211b:0xd12626,strength=Phaser.Math.Clamp((risk-10)/70,.08,.95);
+  const veil=this.add.rectangle(w/2,h/2,w,h,color,.025+strength*(level==='madness'?.095:.07)).setDepth(6),frame=this.add.rectangle(w/2,h/2,Math.max(40,w-10),Math.max(40,h-10)).setStrokeStyle(level==='madness'?4:level==='extreme'?3:2,color,.12+strength*.36).setDepth(28);
   const reduced=document.documentElement.classList.contains('reduce-motion')||window.matchMedia('(prefers-reduced-motion: reduce)').matches;if(reduced)return;
-  if(level==='danger'||level==='extreme')this.tweens.add({targets:[veil,frame],alpha:{from:.56,to:1},duration:level==='extreme'?720:1250,yoyo:true,repeat:-1,ease:'Sine.InOut'});
-  const motes=level==='extreme'?9:level==='danger'?5:2;for(let i=0;i<motes;i++){const x=((i*97+41)%100)/100*w,y=h*(.72+((i*23)%20)/100),mote=this.add.rectangle(x,y,level==='extreme'?3:2,level==='extreme'?3:2,color,.32+strength*.3).setDepth(7);this.tweens.add({targets:mote,y:h*(.18+((i*19)%30)/100),x:x+((i%2?1:-1)*(10+(i%3)*7)),alpha:0,duration:2100+(i%4)*360,delay:i*120,repeat:-1,repeatDelay:220+(i%3)*130});}
+  if(level==='danger'||level==='extreme'||level==='madness')this.tweens.add({targets:[veil,frame],alpha:{from:.5,to:1},duration:level==='madness'?430:level==='extreme'?720:1250,yoyo:true,repeat:-1,ease:'Sine.InOut'});
+  const motes=level==='madness'?15:level==='extreme'?9:level==='danger'?5:2;for(let i=0;i<motes;i++){const x=((i*97+41)%100)/100*w,y=h*(.72+((i*23)%20)/100),mote=this.add.rectangle(x,y,level==='madness'?4:level==='extreme'?3:2,level==='madness'?4:level==='extreme'?3:2,color,.32+strength*.3).setDepth(7);this.tweens.add({targets:mote,y:h*(.18+((i*19)%30)/100),x:x+((i%2?1:-1)*(10+(i%3)*7)),alpha:0,duration:2100+(i%4)*360,delay:i*120,repeat:-1,repeatDelay:220+(i%3)*130});}
  }
  private addChest(c:Chest,x:number,y:number,i:number):void{
   const compact=this.scale.width<600,scale=compact?2:3,color=tierColor[c.tier]??tierColor.common!,view=this.add.container(x,y).setDepth(12);
