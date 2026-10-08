@@ -477,3 +477,21 @@ html[data-floor] .room-rune .sigil-art { stroke: var(--floor-glow); }
 @keyframes madness-banner-pulse{from{filter:saturate(.88);transform:translateX(-1px)}to{filter:saturate(1.2);transform:translateX(1px);box-shadow:inset 0 0 30px #ff2f2235,0 0 28px #a51a184f}}
 @media(max-width:700px){.madness-banner{align-items:flex-start;flex-direction:column;gap:5px}.madness-banner span{line-height:1.45}}
 @media(prefers-reduced-motion:reduce){.madness-banner,.risk-madness .escape-sealed{animation:none}}
+
+
+/* Unique floor rules */
+.floor-rule-banner{display:flex;align-items:center;gap:11px;margin:10px 0 14px;padding:9px 12px;border:1px solid #9c8d663c;background:linear-gradient(90deg,#2a241b99,#141511a8);color:#bcb28f}
+.floor-rule-banner>b{display:grid;place-items:center;min-width:50px;height:30px;padding:0 7px;border-right:1px solid currentColor;font:700 8px monospace;letter-spacing:.15em;color:#d0b879}
+.floor-rule-banner>span{display:flex;align-items:baseline;gap:9px;min-width:0}
+.floor-rule-banner strong{color:#d2c49e;font:600 10px var(--serif);white-space:nowrap}
+.floor-rule-banner small{color:#8e8a76;font-size:8px;line-height:1.4}
+.floor-rule-echo{border-color:#829c8745;background:linear-gradient(90deg,#18251d99,#121713b0)}.floor-rule-echo>b{color:#9fc1a5}
+.floor-rule-gold-fever{border-color:#b7984d55;background:linear-gradient(90deg,#312713a3,#16150fae)}.floor-rule-gold-fever>b{color:#d7b458}
+.floor-rule-blood-pulse{border-color:#a84e465c;background:linear-gradient(90deg,#311715a8,#17100fad)}.floor-rule-blood-pulse>b{color:#dc7468}
+.floor-rule-veil{border-color:#856b9c55;background:linear-gradient(90deg,#231c2da8,#111016b5)}.floor-rule-veil>b{color:#b69acb}
+.floor-rule-devils-law{border-color:#d545376b;background:linear-gradient(90deg,#38110fad,#180b0ab8);box-shadow:inset 0 0 18px #b8231b17}.floor-rule-devils-law>b{color:#ed6b5d}
+.risk-track.sealed-risk{position:relative;overflow:hidden;background:repeating-linear-gradient(135deg,#2a1717 0 6px,#171313 6px 12px)}
+.risk-track.sealed-risk i{width:100%!important;opacity:.28;background:repeating-linear-gradient(90deg,#6e525f 0 8px,#3d303d 8px 16px);box-shadow:none}
+.risk-track.sealed-risk:after{content:'SEALED';position:absolute;inset:0;display:grid;place-items:center;color:#a189a8;font:6px monospace;letter-spacing:.16em}
+.chest-risk.risk-hidden{color:#a78ead;letter-spacing:.08em;text-shadow:0 0 8px #7d5a8a55}
+@media(max-width:700px){.floor-rule-banner{align-items:flex-start}.floor-rule-banner>span{display:grid;gap:2px}.floor-rule-banner small{white-space:normal}}
